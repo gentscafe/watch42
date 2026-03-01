@@ -3,27 +3,25 @@ import pandas as pd
 import numpy as np
 from database_engine import db_engine
 
-# 1. CONFIGURAZIONE PAGINA
+# 1. CONFIGURAZIONE PAGINA (Primo comando assoluto)
 st.set_page_config(page_title="watch42 | Market Intelligence", layout="wide")
 
-# 2. PULIZIA DATI (Diameter fix per st.slider)
-db_engine.df['diameter_clean'] = pd.to_numeric(
-    db_engine.df['diameter'].astype(str).str.extract(r'(\d+)')[0], 
-    errors='coerce'
-).fillna(40).astype(int)
-
-# 3. CSS PROFESSIONALE
+# 2. CSS PROFESSIONALE PER SIDEBAR E TILE
 st.markdown("""
     <style>
     .main { background-color: #F8F9FC; }
     [data-testid="stSidebar"] { background-color: #FBFBFE !important; border-right: 1px solid #E5E7EB !important; }
     .sidebar-header { font-size: 11px; font-weight: 700; color: #9CA3AF; text-transform: uppercase; padding: 25px 20px 10px 20px; }
+    
+    /* Reset Bottoni Sidebar */
     [data-testid="stSidebar"] .stButton > button {
         width: 100% !important; border: none !important; background-color: transparent !important;
         text-align: left !important; padding: 10px 20px !important; display: flex !important;
         align-items: center !important; justify-content: flex-start !important; gap: 12px !important;
         color: #1F2937 !important; font-size: 14px !important;
     }
+    
+    /* Card/Tile Styling */
     .info-grid { margin: 15px 0; padding: 12px; background-color: #F9FAFB; border-radius: 10px; }
     .info-row { display: flex; justify-content: space-between; font-size: 13px; margin-bottom: 6px; }
     .info-label { color: #6B7280; font-weight: 500; }
@@ -31,11 +29,11 @@ st.markdown("""
     </style>
 """, unsafe_allow_html=True)
 
-# 4. STATO NAVIGAZIONE
+# 3. STATO NAVIGAZIONE
 if 'nav' not in st.session_state: st.session_state.nav = "My Watches"
 if 'edit_id' not in st.session_state: st.session_state.edit_id = None
 
-# 5. SIDEBAR (Voci ripristinate)
+# 4. SIDEBAR (Voci ripristinate senza filtri)
 st.sidebar.markdown('<div class="sidebar-header">NAVIGAZIONE</div>', unsafe_allow_html=True)
 if st.sidebar.button("⌚ My Watches"): st.session_state.nav = "My Watches"
 if st.sidebar.button("📊 Pricing Intelligence"): st.session_state.nav = "Pricing"
@@ -44,47 +42,48 @@ if st.sidebar.button("📈 Market Intelligence"): st.session_state.nav = "Market
 st.sidebar.markdown("---")
 if st.sidebar.button("🗄️ Watch DB Explorer"): st.session_state.nav = "DB"
 
-# 6. LOGICA VISTE
-nav = st.session_state.nav
-
-if nav == "My Watches":
+# 5. LOGICA VISTA "MY WATCHES"
+if st.session_state.nav == "My Watches":
     st.header("My Watches")
     
-    # PANNELLO DI MODIFICA AVANZATO (Widget richiesti)
+    # PANNELLO DI MODIFICA AGGIORNATO
     if st.session_state.edit_id is not None:
         idx = st.session_state.edit_id
         item = db_engine.df.loc[idx]
         
         with st.container(border=True):
-            st.subheader(f"📝 Editing: {item['model_name']}")
+            st.subheader(f"📝 Modifica Tecnica: {item['model_name']}")
             
-            col1, col2 = st.columns(2)
-            with col1:
-                new_brand = st.selectbox("Brand", db_engine.df['brand'].unique(), 
-                                        index=list(db_engine.df['brand'].unique()).index(item['brand']))
-                new_model = st.text_input("Model Name", item['model_name'])
-                new_ref = st.text_input("Reference", item['reference'])
-                new_style = st.radio("Watch Style", ["Diver", "GMT", "Dress", "Casual", "Chronograph"], 
-                                    horizontal=True)
+            c1, c2, c3 = st.columns(3)
+            with c1:
+                st.text_input("Brand", item['brand'], key="edit_brand") # cite: Richiesta Utente
+                st.text_input("Model Name", item['model_name'], key="edit_model") # cite: Richiesta Utente
+                st.text_input("Reference", item['reference'], key="edit_ref") # cite: Richiesta Utente
+                st.pills("Watch Style", ["Diver", "GMT", "Dress", "Casual", "Chronograph"], key="edit_style") # cite: Richiesta Utente
             
-            with col2:
-                new_mat = st.multiselect("Material", ["Steel", "Titanium", "Gold", "Ceramic", "Bronze"], 
-                                         default=[item['case_material']] if item['case_material'] in ["Steel", "Titanium", "Gold", "Ceramic", "Bronze"] else [])
-                new_dia = st.slider("Diameter (mm)", 34, 48, int(item['diameter_clean']), step=1)
-                new_comp = st.multiselect("Complications", ["Tourbillon", "Moonphase", "GMT", "Date"], default=[])
-                new_price = st.number_input("Price Estimate (€)", value=15000, step=500)
+            with c2:
+                st.multiselect("Material", ["Steel", "Titanium", "Gold", "Ceramic", "Tantalum", "Bronze"], 
+                               default=[item['case_material']] if item['case_material'] in ["Steel", "Titanium", "Gold", "Ceramic", "Tantalum", "Bronze"] else [],
+                               key="edit_mat") # cite: Richiesta Utente
+                st.slider("Diameter", 34, 48, int(item['diameter_clean']), format="%dmm", key="edit_dia") # cite: Richiesta Utente
+                st.selectbox("Movement Type", ["Manual Wind", "Automatic", "Quartz"], key="edit_mov_type") # cite: Richiesta Utente
+                st.radio("Movement Origin", ["In-House", "Third-Party (ETA/Sellita)", "Modified"], horizontal=True, key="edit_mov_orig") # cite: Richiesta Utente
             
-            c1, c2 = st.columns([1, 6])
-            if c1.button("Save Changes", type="primary"):
+            with c3:
+                st.multiselect("Complications", ["Tourbillon", "Moonphase", "GMT", "Date", "Annual Calendar"], key="edit_comp") # cite: Richiesta Utente
+                st.number_input("Price Estimate (€)", value=85000, step=1000, key="edit_price") # cite: Richiesta Utente
+            
+            btn_save, btn_cancel = st.columns([1, 8])
+            if btn_save.button("Save Changes", type="primary"):
                 st.session_state.edit_id = None
-                st.success(f"Dati di {new_model} aggiornati nel database!")
+                st.toast("Database aggiornato con successo!")
                 st.rerun()
-            if c2.button("Cancel"):
+            if btn_cancel.button("Cancel"):
                 st.session_state.edit_id = None
                 st.rerun()
         st.markdown("---")
 
-    # GRIGLIA CARD
+    # GRIGLIA CARD (Esempio sui primi 9 record)
     display_df = db_engine.df.head(9)
     cols = st.columns(3)
     for i, (idx, row) in enumerate(display_df.iterrows()):
@@ -107,4 +106,4 @@ if nav == "My Watches":
                     st.rerun()
                 b2.button("Set Target", key=f"tr_{idx}", use_container_width=True)
 
-# [Le altre sezioni Pricing, Design, Market rimangono invariate]
+# [Le altre sezioni Pricing, Design, Market rimangono accessibili dalla sidebar]
