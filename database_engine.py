@@ -6,11 +6,8 @@ import random
 
 USER_BRAND_NAME = "MY BRAND"
 
-def calc_score(reserve, freq):
-    return round((reserve * freq) / 10000, 2)
-
 class WatchDatabase:
-    def __init__(self, file_path='watches_v6.csv'): # v6 per forzare l'aggiornamento dei campi
+    def __init__(self, file_path='watches_v7.csv'):
         self.file_path = file_path
         self.MOVEMENT_TECH_SHEETS = {
             "Mido 72": {"mov_brand": "Mido", "mov_reserve": 72, "mov_freq": 25200, "mov_ref": "Mido 72", "mov_base": "ETA", "mov_type": "Automatic", "mov_diam": 25.6, "mov_jewels": 21},
@@ -19,33 +16,39 @@ class WatchDatabase:
         }
         self.df = self.get_or_create_dataset()
 
-    @st.cache_data(show_spinner="Generazione Dati...")
+    @st.cache_data(show_spinner="Sincronizzazione Database...")
     def get_or_create_dataset(_self):
         if os.path.exists(_self.file_path):
             return pd.read_csv(_self.file_path)
         
-        brands = [USER_BRAND_NAME, "Patek Philippe", "Rolex", "Mido"]
-        brands += [f"Brand Indie {i}" for i in range(1, 90)]
+        brands = [USER_BRAND_NAME, "Patek Philippe", "Rolex", "Mido", "Nomos"]
+        brands += [f"Indie Brand {i}" for i in range(1, 80)]
         data = []
         for b in brands:
-            for i in range(1, 21): # 20 modelli per brand per velocità
+            for i in range(1, 15):
                 m_key = random.choice(list(_self.MOVEMENT_TECH_SHEETS.keys()))
                 m = _self.MOVEMENT_TECH_SHEETS[m_key]
-                p_score = calc_score(m['mov_reserve'], m['mov_freq'])
                 row = {
                     "brand": b, "model_name": f"Vision {i}", "reference": f"REF-{random.randint(1000, 9999)}",
-                    "material": random.choice(["Steel", "Gold", "Titanium"]), 
-                    "diameter": random.choice([39, 40, 42]),
-                    "case_thickness": round(random.uniform(9, 14), 1),
-                    "price_estimate": random.randint(3000, 60000), 
-                    "power_score": p_score, 
-                    "watch_style": random.choice(["Diver", "Dress", "GMT"]),
-                    **m
+                    "material": random.choice(["Steel", "Gold", "Titanium"]), "diameter": random.choice([39, 40, 42]),
+                    "case_thickness": round(random.uniform(9, 14), 1), "price_estimate": random.randint(3000, 50000),
+                    "watch_style": random.choice(["Diver", "Dress", "GMT"]), **m
                 }
                 data.append(row)
         df = pd.DataFrame(data)
         df.to_csv(_self.file_path, index=False)
         return df
+
+    def update_watch_data(self, reference, updated_data):
+        """Salva permanentemente le modifiche nel CSV"""
+        idx = self.df.index[self.df['reference'] == reference].tolist()
+        if idx:
+            for key, value in updated_data.items():
+                self.df.at[idx[0], key] = value
+            self.df.to_csv(self.file_path, index=False)
+            st.cache_data.clear() # Forza il ricaricamento dei dati
+            return True
+        return False
 
     def get_my_watches(self):
         return self.df[self.df['brand'] == USER_BRAND_NAME]
