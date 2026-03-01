@@ -5,7 +5,7 @@ import numpy as np
 # 1. CONFIGURAZIONE PAGINA
 st.set_page_config(page_title="watch42 | Market Intelligence", layout="wide")
 
-# 2. CSS DEFINITIVO (Iniettato globalmente)
+# 2. CSS DEFINITIVO (Iniettato per forzare il look Clean-Tech)
 st.markdown("""
     <style>
     .main { background-color: #F8F9FC; }
@@ -14,7 +14,7 @@ st.markdown("""
         border-right: 1px solid #E5E7EB !important;
     }
     
-    /* Stile professionale per le card */
+    /* Stile per le card degli orologi */
     .watch-card {
         background-color: #FFFFFF;
         padding: 20px;
@@ -53,7 +53,7 @@ st.markdown("""
     .detail-label { color: #6B7280; font-weight: 500; }
     .detail-value { color: #111827; font-weight: 600; }
     
-    /* Allineamento Sidebar */
+    /* Allineamento Sidebar a sinistra come da riferimento */
     [data-testid="stSidebar"] .stButton > button {
         width: 100% !important;
         border: none !important;
@@ -68,7 +68,7 @@ st.markdown("""
     </style>
 """, unsafe_allow_html=True)
 
-# 3. DATI PULITI (Lista di dizionari per evitare errori Pandas)
+# 3. DATI PULITI (Evita l'errore dtype: object)
 def get_clean_data():
     return [
         {"Model": "All Dial Model 1", "Ref": "M001.431.11.001.02", "Price": "1.200", "Mat": "Steel", "Dia": "42mm", "Mov": "Manual"},
@@ -102,11 +102,11 @@ if st.session_state.menu == "My Watches":
     cols = st.columns(3)
     for i, w in enumerate(watches):
         with cols[i % 3]:
-            # Costruiamo la stringa HTML in una variabile
+            # HTML forzato per il rendering grafico
             card_content = f"""
             <div class="watch-card">
                 <div class="card-image-placeholder">⌚</div>
-                <div style="font-size: 17px; font-weight: 700; color: #111827; margin-bottom: 2px;">{w['Model']}</div>
+                <div style="font-size: 17px; font-weight: 700; color: #111827;">{w['Model']}</div>
                 <div style="color: #6B7280; font-size: 12px; margin-bottom: 10px;">Ref: {w['Ref']}</div>
                 
                 <div class="watch-details">
@@ -121,6 +121,5 @@ if st.session_state.menu == "My Watches":
                 </div>
             </div>
             """
-            # Punto cruciale: Usiamo st.markdown CON unsafe_allow_html=True
             st.markdown(card_content, unsafe_allow_html=True)
             st.button("Set as Target", key=f"target_{i}")
