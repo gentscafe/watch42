@@ -7,43 +7,40 @@ import random
 USER_BRAND_NAME = "MY BRAND"
 
 class WatchDatabase:
-    def __init__(self, file_path='watches_ULTIMATE.csv'):
+    def __init__(self, file_path='watches_v11_fix.csv'):
         self.file_path = file_path
         self.df = self.get_or_create_dataset()
 
-    @st.cache_data(show_spinner="Reset e Sincronizzazione Dati...")
+    @st.cache_data(show_spinner="Validazione Dati...")
     def get_or_create_dataset(_self):
-        # Se il file esiste, lo carichiamo e forziamo i tipi numerici
         if os.path.exists(_self.file_path):
             df = pd.read_csv(_self.file_path)
         else:
-            # Generazione forzata di 1000 record con colonne garantite
-            brands = [USER_BRAND_NAME, "Patek Philippe", "Rolex", "Mido", "Omega"]
-            brands += [f"Competitor {i}" for i in range(1, 50)]
-            
+            brands = [USER_BRAND_NAME, "Patek Philippe", "Rolex", "Mido", "Omega", "Cartier", "Zenith", "IWC"]
+            brands += [f"Brand Indie {i}" for i in range(1, 40)]
             data = []
             for b in brands:
-                for i in range(1, 15):
-                    res = float(random.choice([42, 48, 70, 72]))
+                for i in range(1, 12):
+                    res = float(random.choice([42, 48, 70, 72, 80]))
                     thk = float(round(random.uniform(8.0, 15.0), 1))
-                    price = float(random.randint(2000, 50000))
-                    
                     data.append({
                         "brand": b,
-                        "model_name": f"Model {i}",
-                        "reference": f"REF-{b[:3].upper()}-{random.randint(100, 999)}",
-                        "material": random.choice(["Steel", "Gold", "Titanium"]),
-                        "price_estimate": price,
+                        "model_name": f"Vision {i}",
+                        "reference": f"REF-{random.randint(1000, 9999)}",
+                        "material": random.choice(["Steel", "Gold", "Titanium", "Platinum"]),
+                        "price_estimate": float(random.randint(3000, 70000)),
                         "mov_reserve": res,
                         "case_thickness": thk,
-                        "power_score": float(round((res * 28800) / 10000, 2))
+                        "mov_freq": float(random.choice([21600, 25200, 28800])),
+                        "power_score": float(round((res * 2.8), 1))
                     })
             df = pd.DataFrame(data)
             df.to_csv(_self.file_path, index=False)
         
-        # OPERAZIONE CRUCIALE: Forza la conversione numerica prima di restituire il DF
-        for col in ['price_estimate', 'mov_reserve', 'case_thickness', 'power_score']:
-            df[col] = pd.to_numeric(df[col], errors='coerce').fillna(0.0)
+        # FORZATURA TIPI DATI (Risolve il problema del grafico vuoto)
+        cols_float = ['price_estimate', 'mov_reserve', 'case_thickness', 'mov_freq', 'power_score']
+        for col in cols_float:
+            df[col] = pd.to_numeric(df[col], errors='coerce').astype(float)
         return df
 
     def update_watch_data(self, reference, updated_data):
@@ -52,10 +49,8 @@ class WatchDatabase:
             for key, value in updated_data.items():
                 self.df.at[idx[0], key] = value
             self.df.to_csv(self.file_path, index=False)
+            st.cache_data.clear()
             return True
         return False
-
-    def get_my_watches(self):
-        return self.df[self.df['brand'] == USER_BRAND_NAME]
 
 db_engine = WatchDatabase()
