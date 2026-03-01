@@ -4,6 +4,10 @@ import streamlit as st
 import os
 import random
 
+# --- CONFIGURAZIONE IDENTITÀ ---
+# Definiamo il brand che rappresenta l'utente del servizio
+USER_BRAND_NAME = "Watch42 Lab"
+
 class WatchDatabase:
     def __init__(self, file_path='watches_database.csv'):
         self.file_path = file_path
@@ -47,8 +51,9 @@ class WatchDatabase:
         if os.path.exists(_self.file_path):
             return pd.read_csv(_self.file_path)
         
-        brands = ["Mido", "Patek Philippe", "Nomos Glashütte", "F.P. Journe", "H. Moser & Cie"]
-        brands += [f"Independent Lab {i}" for i in range(1, 96)]
+        # Aggiungiamo il brand dell'utente alla lista dei brand
+        brands = [USER_BRAND_NAME, "Mido", "Patek Philippe", "Nomos Glashütte", "F.P. Journe", "H. Moser & Cie"]
+        brands += [f"Independent Lab {i}" for i in range(1, 91)]
         
         styles = ["Dress", "Diver", "Chronograph", "GMT", "Pilot/Field"]
         materials = ["Steel", "Titanium", "Gold", "Platinum"]
@@ -58,19 +63,17 @@ class WatchDatabase:
         mov_names = list(_self.MOVEMENT_TECH_SHEETS.keys())
 
         for brand in brands:
+            # Generiamo 50 modelli per ogni brand (incluso quello dell'utente)
             for i in range(1, 51):
-                # Scegliamo un movimento a caso dal pool tecnico
                 mov_name = random.choice(mov_names)
                 tech_sheet = _self.MOVEMENT_TECH_SHEETS[mov_name]
-                
                 watch_style = random.choice(styles)
                 
-                # Uniamo i dati dell'orologio con la scheda tecnica del movimento
                 record = {
                     "brand": brand,
                     "model_name": f"{random.choice(['Legacy', 'Heritage', 'Vision'])} {i}",
                     "model_version": random.choice(versions),
-                    "reference": f"REF-{brand[:3].upper()}-{random.randint(100, 999)}",
+                    "reference": f"REF-{brand[:3].upper()}-{random.randint(1000, 9999)}",
                     "watch_style": watch_style,
                     "material": random.choice(materials),
                     "diameter": random.choice([38, 39, 40, 41, 42]),
@@ -78,7 +81,6 @@ class WatchDatabase:
                     "img_url": "https://images.unsplash.com/photo-1523170335258-f5ed11844a49?q=80&w=300&h=300&auto=format&fit=crop"
                 }
                 
-                # Aggiungiamo i campi tecnici del movimento
                 record.update(tech_sheet)
                 data.append(record)
         
@@ -95,5 +97,9 @@ class WatchDatabase:
                 elif isinstance(val, tuple): filtered_df = filtered_df[filtered_df[col].between(val[0], val[1])]
                 elif isinstance(val, str): filtered_df = filtered_df[filtered_df[col].str.contains(val, case=False)]
         return filtered_df
+
+    def get_my_watches(self):
+        """Restituisce esclusivamente gli orologi appartenenti al brand dell'utente"""
+        return self.df[self.df['brand'] == USER_BRAND_NAME]
 
 db_engine = WatchDatabase()
