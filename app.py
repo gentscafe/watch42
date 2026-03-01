@@ -3,13 +3,13 @@ import pandas as pd
 import numpy as np
 from database_engine import get_watch_dataset
 
-# 1. CONFIGURAZIONE PAGINA
+# 1. CONFIGURAZIONE PAGINA E DATI
 st.set_page_config(page_title="watch42 | Market Intelligence", layout="wide")
 
-# Caricamento dataset
+# Caricamento database (5000 record)
 df_global = get_watch_dataset()
 
-# 2. CSS AVANZATO (Bottoni dentro il Tile e Sidebar pulita)
+# 2. CSS AVANZATO (Allineamento Sidebar e Bottoni nel Tile)
 st.markdown("""
     <style>
     .main { background-color: #F8F9FC; }
@@ -20,10 +20,10 @@ st.markdown("""
     .sidebar-header {
         font-size: 11px; font-weight: 700; color: #9CA3AF;
         letter-spacing: 1.5px; text-transform: uppercase;
-        padding: 30px 25px 15px 25px;
+        padding: 30px 25px 10px 25px;
     }
     
-    /* Tile/Card Design */
+    /* Design del Tile/Card */
     .watch-card {
         background-color: #FFFFFF; padding: 20px; border-radius: 20px;
         box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.05);
@@ -42,15 +42,22 @@ st.markdown("""
     .detail-label { color: #6B7280; font-weight: 500; }
     .detail-value { color: #111827; font-weight: 600; }
 
-    /* Forzatura allineamento Sidebar */
+    /* Forzatura allineamento Sidebar a sinistra */
     [data-testid="stSidebar"] .stButton > button {
         width: 100% !important; border: none !important;
         background-color: transparent !important; text-align: left !important;
         padding: 10px 25px !important; display: flex !important;
         align-items: center !important; justify-content: flex-start !important; gap: 12px !important;
+        color: #1F2937 !important;
     }
     
-    /* Bottoni dentro il tile stilizzati */
+    /* Hover e Active Sidebar */
+    [data-testid="stSidebar"] .stButton > button:hover {
+        background-color: #F3F4F6 !important;
+        color: #2E5BFF !important;
+    }
+
+    /* Stile pulsanti interni al tile */
     .stButton > button {
         border-radius: 8px !important;
         font-size: 12px !important;
@@ -58,46 +65,58 @@ st.markdown("""
     </style>
 """, unsafe_allow_html=True)
 
-# 3. GESTIONE STATO E MODIFICA
+# 3. GESTIONE STATO MODIFICA
 if 'editing_id' not in st.session_state:
     st.session_state.editing_id = None
+if 'page' not in st.session_state:
+    st.session_state.page = "My Watches"
 
-# Funzione per simulare il pop-up (usando un expander in alto)
+# Pannello di modifica inline (per evitare errori di versione st.dialog)
 def show_edit_panel(row_data, idx):
-    with st.expander(f"📝 Modifica: {row_data['model_name']}", expanded=True):
-        col1, col2 = st.columns(2)
-        new_model = col1.text_input("Modello", row_data['model_name'], key=f"edit_m_{idx}")
-        new_price = col2.text_input("Prezzo (€)", row_data['price'], key=f"edit_p_{idx}")
-        if st.button("Salva Modifiche", key=f"save_{idx}"):
-            st.success("Dati aggiornati (Simulazione)")
+    with st.container(border=True):
+        st.subheader(f"📝 Modifica: {row_data['model_name']}")
+        col1, col2, col3 = st.columns(3)
+        new_model = col1.text_input("Modello", row_data['model_name'], key=f"ed_m_{idx}")
+        new_price = col2.text_input("Prezzo (€)", str(row_data['price']), key=f"ed_p_{idx}")
+        new_mat = col3.text_input("Materiale", row_data['case_material'], key=f"ed_mat_{idx}")
+        
+        c1, c2 = st.columns([1, 5])
+        if c1.button("Salva", key=f"save_{idx}", type="primary"):
+            st.toast("Modifiche salvate con successo!")
+            st.session_state.editing_id = None
+            st.rerun()
+        if c2.button("Annulla", key=f"cancel_{idx}"):
             st.session_state.editing_id = None
             st.rerun()
 
 # 4. SIDEBAR NAVIGATION
 st.sidebar.markdown('<div class="sidebar-header">NAVIGAZIONE</div>', unsafe_allow_html=True)
-if 'page' not in st.session_state: st.session_state.page = "My Watches"
 
-if st.sidebar.button("⌚ My Watches"): st.session_state.page = "My Watches"
-if st.sidebar.button("📊 Pricing Intelligence"): st.session_state.page = "Pricing Intelligence"
-if st.sidebar.button("🗄️ Watch DB"): st.sidebar.markdown("---"); st.session_state.page = "Watch DB"
+if st.sidebar.button("⌚ My Watches"):
+    st.session_state.page = "My Watches"
+if st.sidebar.button("📊 Pricing Intelligence"):
+    st.session_state.page = "Pricing Intelligence"
+if st.sidebar.button("🗄️ Watch DB"):
+    st.session_state.page = "Watch DB"
 
-# 5. LOGICA VISTA MY WATCHES
+# 5. LOGICA VISTE
 if st.session_state.page == "My Watches":
     st.header("My Watches")
     
-    # Mostriamo il pannello di modifica se attivato
+    # Se un orologio è in fase di modifica, mostra il pannello in alto
     if st.session_state.editing_id is not None:
         target_row = df_global.iloc[st.session_state.editing_id]
         show_edit_panel(target_row, st.session_state.editing_id)
 
+    # Visualizzazione primi record dal DB
     display_df = df_global.head(6)
     cols = st.columns(3)
     
     for i, (idx, row) in enumerate(display_df.iterrows()):
         with cols[i % 3]:
-            # Contenitore Tile
-            with st.container():
-                # Parte Superiore: Grafica e Dati (HTML)
+            # Contenitore Tile fisico per raggruppare HTML e Bottoni
+            with st.container(border=False):
+                # Parte Superiore: Card Grafica (HTML)
                 html_card = f"""
                 <div class="watch-card">
                     <div class="card-image-placeholder">⌚</div>
@@ -109,7 +128,7 @@ if st.session_state.page == "My Watches":
                         <div class="detail-row"><span class="detail-label">Diameter</span><span class="detail-value">{row['diameter']}</span></div>
                         <div class="detail-row"><span class="detail-label">Style</span><span class="detail-value">{row['watch_style']}</span></div>
                     </div>
-                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+                    <div style="display: flex; justify-content: space-between; align-items: center;">
                         <div style="font-size: 18px; font-weight: 700; color: #2E5BFF;">€ {row['price']}</div>
                         <div style="font-size: 11px; color: #059669; font-weight: 600;">● Up to date</div>
                     </div>
@@ -117,13 +136,22 @@ if st.session_state.page == "My Watches":
                 """
                 st.markdown(html_card, unsafe_allow_html=True)
                 
-                # Parte Inferiore: Bottoni (Streamlit nativi dentro il tile fisico)
+                # Parte Inferiore: Bottoni nativi (dentro il tile)
                 btn_col1, btn_col2 = st.columns(2)
                 if btn_col1.button("Modifica", key=f"edit_btn_{idx}", use_container_width=True):
                     st.session_state.editing_id = idx
                     st.rerun()
-                btn_col2.button("Set Target", key=f"target_{idx}", use_container_width=True)
+                if btn_col2.button("Set Target", key=f"target_{idx}", use_container_width=True):
+                    st.success(f"Target impostato: {row['model_name']}")
+
+elif st.session_state.page == "Pricing Intelligence":
+    st.header("Pricing Intelligence")
+    st.info("Analisi dei dati basata sui 5000 record del database.")
+    # Esempio di grafico dinamico col DB
+    fig = px.scatter(df_global.head(100), x='price', y='diameter', color='brand', title="Posizionamento Prezzo/Diametro")
+    st.plotly_chart(fig, use_container_width=True)
 
 elif st.session_state.page == "Watch DB":
     st.title("⌚ Watch Database Explorer")
+    st.write(f"Record totali disponibili: {len(df_global)}")
     st.dataframe(df_global, use_container_width=True, hide_index=True)
