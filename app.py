@@ -46,7 +46,7 @@ st.markdown("""
     </style>
 """, unsafe_allow_html=True)
 
-# 3. GESTIONE DATI (Inizializzazione session_state per rendere le modifiche persistenti)
+# 3. GESTIONE DATI IN SESSION STATE
 if 'watch_data' not in st.session_state:
     st.session_state.watch_data = [
         {"Model": "All Dial Model 1", "Ref": "M001.431.11.001.02", "Price": "1.200", "Mat": "Steel", "Dia": "42mm", "Mov": "Manual"},
@@ -57,28 +57,8 @@ if 'watch_data' not in st.session_state:
         {"Model": "All Dial Model 6", "Ref": "M001.431.11.051.02", "Price": "1.950", "Mat": "Steel", "Dia": "38mm", "Mov": "Automatic"}
     ]
 
-# FUNZIONE PER IL POP-UP DI MODIFICA
-@st.dialog("Edit Watch Details")
-def edit_watch_dialog(index):
-    watch = st.session_state.watch_data[index]
-    
-    new_model = st.text_input("Model Name", watch["Model"])
-    new_ref = st.text_input("Reference", watch["Ref"])
-    
-    col1, col2 = st.columns(2)
-    with col1:
-        new_price = st.text_input("Price (€)", watch["Price"])
-        new_mat = st.selectbox("Material", ["Steel", "Titanium", "Gold", "Bronze"], index=["Steel", "Titanium", "Gold", "Bronze"].index(watch["Mat"]) if watch["Mat"] in ["Steel", "Titanium", "Gold", "Bronze"] else 0)
-    with col2:
-        new_dia = st.text_input("Diameter", watch["Dia"])
-        new_mov = st.selectbox("Movement", ["Manual", "Automatic", "Quartz"], index=["Manual", "Automatic", "Quartz"].index(watch["Mov"]) if watch["Mov"] in ["Manual", "Automatic", "Quartz"] else 0)
-    
-    if st.button("Save Changes", type="primary"):
-        st.session_state.watch_data[index] = {
-            "Model": new_model, "Ref": new_ref, "Price": new_price,
-            "Mat": new_mat, "Dia": new_dia, "Mov": new_mov
-        }
-        st.rerun()
+if 'editing_index' not in st.session_state:
+    st.session_state.editing_index = None
 
 # 4. SIDEBAR
 st.sidebar.markdown('<div class="sidebar-header">MENU</div>', unsafe_allow_html=True)
@@ -94,6 +74,37 @@ menu = st.session_state.menu
 # 5. LOGICA DELLE VISTE
 if menu == "My Watches":
     st.header("My Watches")
+    
+    # SEZIONE DI MODIFICA (Sostituisce il Pop-up se un indice è selezionato)
+    if st.session_state.editing_index is not None:
+        idx = st.session_state.editing_index
+        watch = st.session_state.watch_data[idx]
+        
+        with st.expander(f"📝 Editing: {watch['Model']}", expanded=True):
+            col1, col2 = st.columns(2)
+            with col1:
+                new_model = st.text_input("Model Name", watch["Model"])
+                new_ref = st.text_input("Reference", watch["Ref"])
+                new_price = st.text_input("Price (€)", watch["Price"])
+            with col2:
+                new_mat = st.selectbox("Material", ["Steel", "Titanium", "Gold", "Bronze"], index=0)
+                new_dia = st.text_input("Diameter", watch["Dia"])
+                new_mov = st.selectbox("Movement", ["Manual", "Automatic", "Quartz"], index=0)
+            
+            c1, c2 = st.columns(2)
+            if c1.button("Save Changes", type="primary"):
+                st.session_state.watch_data[idx] = {
+                    "Model": new_model, "Ref": new_ref, "Price": new_price,
+                    "Mat": new_mat, "Dia": new_dia, "Mov": new_mov
+                }
+                st.session_state.editing_index = None
+                st.rerun()
+            if c2.button("Cancel"):
+                st.session_state.editing_index = None
+                st.rerun()
+        st.markdown("---")
+
+    # GRIGLIA OROLOGI
     cols = st.columns(3)
     for i, w in enumerate(st.session_state.watch_data):
         with cols[i % 3]:
@@ -115,12 +126,11 @@ if menu == "My Watches":
             """
             st.markdown(card_html, unsafe_allow_html=True)
             
-            # Pulsanti d'azione
-            c1, c2 = st.columns(2)
-            with c1:
-                if st.button(f"Edit Details", key=f"edit_{i}", use_container_width=True):
-                    edit_watch_dialog(i)
-            with c2:
-                st.button("Set as Target", key=f"target_{i}", use_container_width=True)
+            btn_col1, btn_col2 = st.columns(2)
+            if btn_col1.button(f"Edit Details", key=f"edit_btn_{i}"):
+                st.session_state.editing_index = i
+                st.rerun()
+            btn_col2.button("Set as Target", key=f"target_btn_{i}")
 
-# [Le altre sezioni Pricing, Design, Market rimangono invariate come nel codice precedente]
+else:
+    st.info(f"Sezione {menu} in fase di sviluppo.")
