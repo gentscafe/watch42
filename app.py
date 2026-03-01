@@ -1,86 +1,86 @@
 import streamlit as st
 import pandas as pd
 import plotly.express as px
-from database_engine import db_engine, USER_BRAND_NAME
 
+# 1. CONFIGURAZIONE PAGINA
 st.set_page_config(page_title="watch42 | CEO Dashboard", layout="wide")
 
-if 'nav' not in st.session_state: st.session_state.nav = "My Watches"
-if 'edit_ref' not in st.session_state: st.session_state.edit_ref = None
+# 2. DATI STATICI (Senza dipendenze esterne)
+MY_WATCHES = [
+    {"ref": "V-01", "name": "Ocean Deep", "price": 4500, "reserve": 72, "thick": 12.5, "mat": "Steel"},
+    {"ref": "V-02", "name": "Midnight GMT", "price": 8900, "reserve": 48, "thick": 11.0, "mat": "Gold"},
+    {"ref": "V-03", "name": "Sky High", "price": 12500, "reserve": 80, "thick": 9.5, "mat": "Titanium"},
+    {"ref": "V-04", "name": "Urban Slim", "price": 3200, "reserve": 42, "thick": 7.8, "mat": "Steel"},
+    {"ref": "V-05", "name": "Chronos Gold", "price": 24000, "reserve": 60, "thick": 13.0, "mat": "Gold"},
+    {"ref": "V-06", "name": "Pure White", "price": 5400, "reserve": 72, "thick": 10.5, "mat": "Steel"},
+    {"ref": "V-07", "name": "Black Stealth", "price": 6700, "reserve": 48, "thick": 12.0, "mat": "Titanium"},
+    {"ref": "V-08", "name": "Heritage 38", "price": 4100, "reserve": 38, "thick": 11.5, "mat": "Steel"},
+    {"ref": "V-09", "name": "Luna Phase", "price": 15600, "reserve": 72, "thick": 10.2, "mat": "Gold"},
+    {"ref": "V-10", "name": "Aqua Master", "price": 2800, "reserve": 42, "thick": 14.0, "mat": "Steel"},
+]
 
-# SIDEBAR
-st.sidebar.title(f"Admin: {USER_BRAND_NAME}")
-if st.sidebar.button("⌚ My Watches", use_container_width=True):
-    st.session_state.nav = "My Watches"
-    st.session_state.edit_ref = None
-    st.rerun()
-if st.sidebar.button("📊 Pricing Intelligence", use_container_width=True):
-    st.session_state.nav = "Pricing"
-    st.rerun()
-if st.sidebar.button("🗄️ Database Explorer", use_container_width=True):
-    st.session_state.nav = "Explorer"
-    st.rerun()
+# Dati per il grafico (Competitor fittizi)
+MARKET_DATA = pd.DataFrame([
+    {"brand": "Rolex", "price": 12000, "reserve": 70, "thick": 12.5, "type": "Competitor"},
+    {"brand": "Omega", "price": 6500, "reserve": 60, "thick": 13.5, "type": "Competitor"},
+    {"brand": "Patek", "price": 45000, "reserve": 45, "thick": 8.5, "type": "Competitor"},
+    {"brand": "Cartier", "price": 7200, "reserve": 42, "thick": 9.2, "type": "Competitor"},
+    {"brand": "Tudor", "price": 4100, "reserve": 70, "thick": 14.5, "type": "Competitor"},
+    {"brand": "MY BRAND", "price": 8900, "reserve": 48, "thick": 11.0, "type": "Target"},
+] + [{"brand": f"Indie {i}", "price": 2000 + (i*500), "reserve": 40 + (i%30), "thick": 9+(i%5), "type": "Market"} for i in range(50)])
 
-# --- VISTA: MY WATCHES ---
-if st.session_state.nav == "My Watches":
-    my_df = db_engine.df[db_engine.df['brand'] == USER_BRAND_NAME]
+# 3. SIDEBAR STATICA
+st.sidebar.title("watch42")
+nav = st.sidebar.radio("NAVIGAZIONE", ["⌚ My Watches", "📊 Pricing Intelligence"])
+
+# 4. LOGICA UI
+if nav == "⌚ My Watches":
+    st.header("Il Tuo Portfolio")
+    st.markdown("Visualizzazione dei 10 modelli principali in collezione.")
     
-    if st.session_state.edit_ref:
-        watch = my_df[my_df['reference'] == st.session_state.edit_ref].iloc[0]
-        st.header(f"Modifica: {watch['model_name']}")
-        if st.button("← Torna alla lista"):
-            st.session_state.edit_ref = None
-            st.rerun()
-        
-        new_price = st.number_input("Prezzo (€)", value=float(watch['price_estimate']))
-        if st.button("Salva Modifiche"):
-            db_engine.update_watch_data(st.session_state.edit_ref, {"price_estimate": new_price})
-            st.success("Salvato!")
-            st.session_state.edit_ref = None
-            st.rerun()
-    else:
-        st.header(f"I Tuoi Orologi")
-        cols = st.columns(3)
-        for i, (idx, row) in enumerate(my_df.iterrows()):
-            with cols[i % 3]:
-                with st.container(border=True):
-                    st.subheader(row['model_name'])
-                    st.write(f"Ref: {row['reference']} | €{row['price_estimate']:,}")
-                    if st.button("Modifica", key=f"btn_{row['reference']}", use_container_width=True):
-                        st.session_state.edit_ref = row['reference']
-                        st.rerun()
+    cols = st.columns(3)
+    for i, watch in enumerate(MY_WATCHES):
+        with cols[i % 3]:
+            with st.container(border=True):
+                st.markdown(f"### {watch['name']}")
+                st.caption(f"Ref: {watch['ref']} | {watch['mat']}")
+                
+                # Griglia info
+                c1, c2 = st.columns(2)
+                c1.metric("Prezzo", f"€{watch['price']:,}")
+                c2.metric("Spessore", f"{watch['thick']}mm")
+                
+                st.progress(watch['reserve']/100, text=f"Riserva: {watch['reserve']}h")
+                st.button("Vedi Dettagli", key=f"btn_{watch['ref']}", use_container_width=True)
 
-# --- VISTA: PRICING INTELLIGENCE ---
-elif st.session_state.nav == "Pricing":
-    st.header("📊 Analisi Competitiva")
+elif nav == "📊 Pricing Intelligence":
+    st.header("Analisi Posizionamento Prezzo")
     
-    c1, c2 = st.columns(2)
-    y_map = {"mov_reserve": "Riserva di Carica", "case_thickness": "Spessore", "power_score": "Power Score"}
-    y_choice = c1.selectbox("Confronta Prezzo vs:", options=list(y_map.keys()), format_func=lambda x: y_map[x])
+    # Sezione Filtri sopra il grafico
+    with st.expander("🛠️ Filtri e Parametri di Analisi", expanded=True):
+        f1, f2, f3 = st.columns(3)
+        y_axis = f1.selectbox("Seleziona parametro Asse Y", ["reserve", "thick"], format_func=lambda x: "Riserva (h)" if x=="reserve" else "Spessore (mm)")
+        price_range = f2.slider("Range Prezzo (€)", 0, 50000, (2000, 30000))
+        target_watch = f3.selectbox("Highlight Modello", [w['name'] for w in MY_WATCHES])
+
+    # Grafico Statico Popolato
     
-    my_refs = db_engine.df[db_engine.df['brand'] == USER_BRAND_NAME]['reference'].tolist()
-    target_ref = c2.selectbox("Seleziona il Tuo Target", options=my_refs)
-
-    df_plot = db_engine.df.copy()
-    df_plot['Status'] = 'Competitor'
-    df_plot.loc[df_plot['brand'] == USER_BRAND_NAME, 'Status'] = 'Il Tuo Brand'
-    df_plot.loc[df_plot['reference'] == target_ref, 'Status'] = 'TARGET'
-
-    # Immagine di riferimento per il posizionamento di prezzo
     
-
     fig = px.scatter(
-        df_plot, x="price_estimate", y=y_choice, color="Status",
-        hover_name="brand", hover_data=["model_name", "reference"],
-        color_discrete_map={'Competitor': '#D1D5DB', 'Il Tuo Brand': '#2E5BFF', 'TARGET': '#EF4444'},
-        labels={"price_estimate": "Prezzo (€)", y_choice: y_map[y_choice]},
-        height=600, template="plotly_white"
+        MARKET_DATA, 
+        x="price", 
+        y=y_axis, 
+        color="type",
+        hover_name="brand",
+        color_discrete_map={"Competitor": "#D1D5DB", "Market": "#E5E7EB", "Target": "#2E5BFF"},
+        labels={"price": "Prezzo (€)", "reserve": "Riserva di Carica (h)", "thick": "Spessore Cassa (mm)"},
+        height=600,
+        template="plotly_white"
     )
+    
     fig.update_traces(marker=dict(size=12, opacity=0.7))
-    fig.update_traces(marker=dict(size=25, symbol="star", opacity=1), selector=dict(name='TARGET'))
     st.plotly_chart(fig, use_container_width=True)
 
-# --- VISTA: DATABASE EXPLORER ---
-elif st.session_state.nav == "Explorer":
-    st.header("🗄️ Database Explorer")
-    st.dataframe(db_engine.df, use_container_width=True, hide_index=True)
+    # Tabella Comparativa Statica
+    st.subheader("Top Competitor nel Range")
+    st.table(MARKET_DATA.sort_values("price").head(5))
