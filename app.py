@@ -6,7 +6,7 @@ import numpy as np
 # 1. CONFIGURAZIONE PAGINA
 st.set_page_config(page_title="watch42 | Market Intelligence", layout="wide")
 
-# 2. INJECT DEFINITIVE CSS (Stile Card e Sidebar)
+# 2. INJECT CSS (Ottimizzato per evitare errori di visualizzazione)
 def inject_custom_css():
     st.markdown("""
         <style>
@@ -15,17 +15,8 @@ def inject_custom_css():
             background-color: #FBFBFE !important;
             border-right: 1px solid #E5E7EB !important;
         }
-
-        .sidebar-header {
-            font-size: 11px;
-            font-weight: 700;
-            color: #9CA3AF;
-            letter-spacing: 1.5px;
-            text-transform: uppercase;
-            padding: 30px 25px 15px 25px;
-        }
-
-        /* Allineamento a sinistra Sidebar */
+        
+        /* Allineamento Sidebar */
         [data-testid="stSidebar"] .stButton > button {
             width: 100% !important;
             border: none !important;
@@ -33,14 +24,13 @@ def inject_custom_css():
             text-align: left !important;
             padding: 12px 25px !important;
             color: #1F2937 !important;
-            font-size: 15px !important;
             display: flex !important;
             align-items: center !important;
             justify-content: flex-start !important;
             gap: 15px !important;
         }
 
-        /* Stile Card aggiornato per mostrare le info correttamente */
+        /* CARD STYLE: Rendering grafico */
         .watch-card {
             background-color: #FFFFFF;
             padding: 20px;
@@ -76,13 +66,13 @@ def inject_custom_css():
         }
 
         .detail-label { color: #6B7280; font-weight: 500; }
-        .detail-value { color: #111827; font-weight: 600; }
+        .detail-value { color: #111827; font-weight: 600; text-align: right; }
         </style>
     """, unsafe_allow_html=True)
 
 inject_custom_css()
 
-# 3. MOCK DATA (Generazione dati pulita)
+# 3. MOCK DATA (Generazione riga per riga)
 @st.cache_data
 def get_clean_data():
     return pd.DataFrame({
@@ -97,7 +87,7 @@ def get_clean_data():
 df = get_clean_data()
 
 # 4. SIDEBAR
-st.sidebar.markdown('<div class="sidebar-header">MENU</div>', unsafe_allow_html=True)
+st.sidebar.title("watch42")
 if 'menu' not in st.session_state: st.session_state.menu = "My Watches"
 
 if st.sidebar.button("⌚ My Watches"): st.session_state.menu = "My Watches"
@@ -108,33 +98,41 @@ if st.sidebar.button("📈 Market Intelligence"): st.session_state.menu = "Marke
 # 5. VISTA "MY WATCHES"
 if st.session_state.menu == "My Watches":
     st.header("My Watches")
-    st.caption("Visualizzazione a griglia degli orologi del brand.")
     
     cols = st.columns(3)
     for i in range(len(df)):
         with cols[i % 3]:
-            # Estraiamo i valori singoli per evitare errori di rendering
+            # Estrazione valori singoli per evitare errori di testo
             row = df.iloc[i]
             
+            # Rendering della Card
             st.markdown(f"""
             <div class="watch-card">
                 <div class="card-image-placeholder">⌚</div>
-                <div style="font-size: 17px; font-weight: 700;">{row['Model']}</div>
-                <div style="color: #6B7280; font-size: 12px;">Ref: {row['Reference']}</div>
+                <div style="font-size: 17px; font-weight: 700; color: #111827;">{row['Model']}</div>
+                <div style="color: #6B7280; font-size: 12px; margin-bottom: 10px;">Ref: {row['Reference']}</div>
                 
                 <div class="watch-details">
-                    <div class="detail-row"><span class="detail-label">Material</span><span class="detail-value">{row['Material']}</span></div>
-                    <div class="detail-row"><span class="detail-label">Diameter</span><span class="detail-value">{row['Diameter']}</span></div>
-                    <div class="detail-row"><span class="detail-label">Movement</span><span class="detail-value">{row['Movement']}</span></div>
+                    <div class="detail-row">
+                        <span class="detail-label">Material</span>
+                        <span class="detail-value">{row['Material']}</span>
+                    </div>
+                    <div class="detail-row">
+                        <span class="detail-label">Diameter</span>
+                        <span class="detail-value">{row['Diameter']}</span>
+                    </div>
+                    <div class="detail-row">
+                        <span class="detail-label">Movement</span>
+                        <span class="detail-value">{row['Movement']}</span>
+                    </div>
                 </div>
 
-                <div style="display: flex; justify-content: space-between; align-items: center;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 10px;">
                     <div style="font-size: 20px; font-weight: 700; color: #2E5BFF;">€ {row['Price']}</div>
                     <div style="font-size: 12px; color: #059669; font-weight: 600;">● Up to date</div>
                 </div>
             </div>
             """, unsafe_allow_html=True)
+            
+            # Bottone azione Streamlit separato dall'HTML
             st.button("Set as Target", key=f"target_{i}")
-
-else:
-    st.info(f"Sezione {st.session_state.menu} in fase di caricamento dati.")
