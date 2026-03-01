@@ -32,11 +32,6 @@ class WatchDatabase:
         }
         self.df = self.get_or_create_dataset()
 
-    @staticmethod
-    def calculate_power_score(reserve, frequency):
-        """Metodo statico per evitare errori di NameError/self nella cache"""
-        return round((reserve * frequency) / 10000, 2)
-
     @st.cache_data(show_spinner="Generazione Ecosistema MY BRAND...")
     def get_or_create_dataset(_self):
         if os.path.exists(_self.file_path):
@@ -49,14 +44,13 @@ class WatchDatabase:
         mov_names = list(_self.MOVEMENT_TECH_SHEETS.keys())
 
         for brand in brands:
-            # Creiamo 50 orologi per brand
             for i in range(1, 51):
                 mov_name = random.choice(mov_names)
                 tech = _self.MOVEMENT_TECH_SHEETS[mov_name]
                 thickness = round(random.uniform(7.0, 15.0), 1)
                 
-                # Chiamata corretta al metodo statico
-                p_score = _self.calculate_power_score(tech['mov_reserve'], tech['mov_freq'])
+                # Calcolo diretto per evitare NameError con self
+                p_score = round((tech['mov_reserve'] * tech['mov_freq']) / 10000, 2)
                 
                 record = {
                     "brand": brand,
