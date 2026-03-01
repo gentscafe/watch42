@@ -1,34 +1,51 @@
-# --- GRIGLIA CARD OTTIMIZZATA ---
-if my_watches_df.empty:
-    st.info(f"Nessun orologio trovato per il brand {USER_BRAND_NAME}. Genera il database o aggiungi prodotti.")
-else:
-    # Mostriamo gli orologi in una griglia a 3 colonne
-    cols = st.columns(3)
-    for i, (idx, row) in enumerate(my_watches_df.iterrows()):
-        with cols[i % 3]:
-            # Container della Card
-            with st.container(border=True):
-                # Immagine e Info Principali
-                st.markdown(f"""
-                <div style="height:120px; background-color:#F3F4F6; border-radius:15px; display:flex; justify-content:center; align-items:center; font-size:40px;">⌚</div>
-                <div style="font-weight:700; font-size:17px; margin-top:15px; color:#111827;">{row['model_name']}</div>
-                <div style="color:#6B7280; font-size:12px; margin-bottom:10px;">Ref: {row['reference']}</div>
-                
-                <div class="info-grid">
-                    <div class="info-row"><span class="info-label">Materiale</span><span class="info-value">{row['material']}</span></div>
-                    <div class="info-row"><span class="info-label">Diametro</span><span class="info-value">{row['diameter']}mm</span></div>
-                    <div class="info-row"><span class="info-label">Riserva</span><span class="info-value">{row['mov_reserve']}h</span></div>
-                    <div class="info-row"><span class="info-label">Prezzo</span><span class="info-value">€{row['price_estimate']:,}</span></div>
-                </div>
-                """, unsafe_allow_html=True)
-                
-                # Pulsanti d'azione
-                btn_col1, btn_col2 = st.columns(2)
-                
-                # Il pulsante Modifica imposta l'ID nella sessione e ricarica
-                if btn_col1.button("📝 Modifica", key=f"edit_btn_{idx}", use_container_width=True):
-                    st.session_state.edit_id = idx
-                    st.rerun()
-                
-                if btn_col2.button("🎯 Target", key=f"target_btn_{idx}", use_container_width=True):
-                    st.toast(f"Target impostato: {row['model_name']}")
+import streamlit as st
+import pandas as pd
+from database_engine import db_engine, USER_BRAND_NAME
+
+st.set_page_config(page_title="watch42 | Market Intelligence", layout="wide")
+
+# CSS (Invariato, omettilo per brevità ma assicurati che ci sia)
+
+if 'nav' not in st.session_state: st.session_state.nav = "My Watches"
+if 'edit_id' not in st.session_state: st.session_state.edit_id = None
+
+# SIDEBAR
+st.sidebar.markdown(f'<div style="padding: 20px; color: #2E5BFF; font-weight: 800; font-size: 24px;">{USER_BRAND_NAME}</div>', unsafe_allow_html=True)
+st.sidebar.markdown('<div class="sidebar-header">NAVIGAZIONE</div>', unsafe_allow_html=True)
+if st.sidebar.button("⌚ My Watches"): 
+    st.session_state.nav = "My Watches"
+    st.session_state.edit_id = None
+    st.rerun()
+
+# LOGICA VISTA "MY WATCHES"
+if st.session_state.nav == "My Watches":
+    st.header(f"Portfolio: {USER_BRAND_NAME}")
+    
+    my_watches_df = db_engine.get_my_watches()
+    
+    # Se stiamo modificando, mostra il pannello (che avevi già scritto)
+    if st.session_state.edit_id is not None:
+        st.button("← Torna alla lista", on_click=lambda: setattr(st.session_state, 'edit_id', None))
+        # ... qui va il tuo codice dei Tab Modifica ...
+    
+    # Altrimenti mostra la griglia
+    elif not my_watches_df.empty:
+        cols = st.columns(3)
+        for i, (idx, row) in enumerate(my_watches_df.iterrows()):
+            with cols[i % 3]:
+                with st.container(border=True):
+                    st.markdown(f"""
+                    <div style="height:120px; background-color:#F3F4F6; border-radius:15px; display:flex; justify-content:center; align-items:center; font-size:40px;">⌚</div>
+                    <div style="font-weight:700; font-size:17px; margin-top:15px; color:#111827;">{row['model_name']}</div>
+                    <div style="color:#6B7280; font-size:12px; margin-bottom:10px;">Ref: {row['reference']}</div>
+                    
+                    <div class="info-grid">
+                        <div class="info-row"><span class="info-label">Materiale</span> <span class="info-value">{row['material']}</span></div>
+                        <div class="info-row"><span class="info-label">Prezzo</span> <span class="info-value">€{row['price_estimate']:,}</span></div>
+                    </div>
+                    <div style="margin-bottom:10px;"></div>
+                    """, unsafe_allow_html=True)
+                    
+                    if st.button("Modifica", key=f"ed_{idx}", use_container_width=True):
+                        st.session_state.edit_id = idx
+                        st.rerun()
