@@ -7,16 +7,22 @@ import random
 USER_BRAND_NAME = "MY BRAND"
 
 class WatchDatabase:
-    def __init__(self, file_path='watches_v9_final.csv'):
+    def __init__(self, file_path='watches_v10_final.csv'): # v10 per reset totale
         self.file_path = file_path
         self.df = self.get_or_create_dataset()
 
-    @st.cache_data(show_spinner="Sincronizzazione Mercato...")
+    @st.cache_data(show_spinner="Sincronizzazione Dati Mercato...")
     def get_or_create_dataset(_self):
         if os.path.exists(_self.file_path):
-            return pd.read_csv(_self.file_path)
+            df = pd.read_csv(_self.file_path)
+            # Forza la conversione numerica per sicurezza
+            cols_to_fix = ['price_estimate', 'mov_reserve', 'case_thickness', 'power_score']
+            for col in cols_to_fix:
+                if col in df.columns:
+                    df[col] = pd.to_numeric(df[col], errors='coerce').fillna(0)
+            return df
         
-        brands = [USER_BRAND_NAME, "Patek Philippe", "Rolex", "Mido", "Omega", "Cartier"]
+        brands = [USER_BRAND_NAME, "Patek Philippe", "Rolex", "Mido", "Omega", "Cartier", "Zenith"]
         brands += [f"Indie Brand {i}" for i in range(1, 60)]
         
         data = []
@@ -31,11 +37,11 @@ class WatchDatabase:
                     "model_name": f"Vision {i}",
                     "reference": f"REF-{random.randint(1000, 9999)}",
                     "material": random.choice(["Steel", "Gold", "Titanium"]),
-                    "price_estimate": random.randint(2000, 65000),
-                    "mov_reserve": reserve,
-                    "case_thickness": thickness,
-                    "mov_freq": freq,
-                    "power_score": round((reserve * freq) / 10000, 2)
+                    "price_estimate": float(random.randint(2000, 65000)),
+                    "mov_reserve": float(reserve),
+                    "case_thickness": float(thickness),
+                    "mov_freq": float(freq),
+                    "power_score": float(round((reserve * freq) / 10000, 2))
                 }
                 data.append(row)
         
