@@ -1,12 +1,12 @@
 import streamlit as st
-import pandas as pd
+import pd
 import plotly.express as px
 import numpy as np
 
-# 1. CONFIGURAZIONE PAGINA (Vibe Clean-Tech)
+# 1. CONFIGURAZIONE PAGINA
 st.set_page_config(page_title="watch42 | Market Intelligence", layout="wide")
 
-# 2. INJECT CUSTOM CSS (Replica il look & feel dell'immagine di riferimento)
+# 2. INJECT CUSTOM CSS
 def inject_custom_css():
     st.markdown("""
         <style>
@@ -34,7 +34,7 @@ def inject_custom_css():
 
 inject_custom_css()
 
-# 3. MOCK DATA (In attesa di WatchBase Professional API)
+# 3. MOCK DATA
 @st.cache_data
 def get_watchbase_mock_data():
     brands = ["Mido", "Patek Philippe", "Audemars Piguet", "Rolex", "Cartier"]
@@ -51,74 +51,60 @@ def get_watchbase_mock_data():
 
 data = get_watchbase_mock_data()
 
-# 4. SIDEBAR NAVIGATION (Architettura Sidebar Sinistra)
-st.sidebar.title("watch42")
-st.sidebar.caption("v1.0 MVP - WatchBase API")
+# 4. SIDEBAR NAVIGATION (Solo Navigazione - Filtri Rimossi)
+st.sidebar.title("watch42") [cite: 2]
+st.sidebar.caption("v1.0 MVP - WatchBase API") [cite: 5]
 
 menu = st.sidebar.radio(
     "MENU",
-    ["My Watches", "Pricing Intelligence", "Design Intelligence", "Market Intelligence"],
+    ["My Watches", "Pricing Intelligence", "Design Intelligence", "Market Intelligence"], [cite: 16, 18, 19, 20]
     index=0
 )
 
-# 5. DEFINIZIONE DEI FILTRI (Data Schema: WatchBase)
-with st.sidebar.expander("🔍 FILTERS", expanded=True):
-    brand_sel = st.multiselect("Brand (Top 25)", options=data['Brand'].unique()) # [cite: 26]
-    movement_sel = st.selectbox("Movement", ["Automatic", "Manual", "Quartz"]) # [cite: 29]
-    case_material = st.multiselect("Case Material", ["Steel", "Titanium", "Gold", "Bronze", "Carbon"]) # [cite: 30]
-    diameter = st.slider("Diameter (mm)", 34, 48, (38, 42)) # [cite: 32]
-    thickness = st.slider("Thickness (mm)", 6, 18, (8, 14)) # [cite: 33]
-
-# 6. VISTE CORE
+# 5. VISTE CORE
 
 if menu == "My Watches":
-    st.header("My Watches (Landing View)") # [cite: 16, 38]
-    st.write("Visualizzazione a griglia degli orologi del brand.")
+    st.header("My Watches (Landing View)") [cite: 16, 38]
+    st.write("Visualizzazione a griglia degli orologi del brand.") [cite: 16, 39]
     
     cols = st.columns(3)
     for i in range(6):
         with cols[i % 3]:
-            # Card eleganti basate sulle specifiche [cite: 39, 40]
             st.markdown(f"""
             <div style="background: white; padding: 15px; border-radius: 12px; border: 1px solid #EEE; margin-bottom: 10px;">
-                <p style="font-weight: bold; margin-bottom: 2px;">All Dial Model {i+1}</p>
-                <p style="font-size: 0.8em; color: gray;">Ref: M001.431.11.0{i}1.02</p>
+                <p style="font-weight: bold; margin-bottom: 2px;">All Dial Model {i+1}</p> [cite: 27]
+                <p style="font-size: 0.8em; color: gray;">Ref: M001.431.11.0{i}1.02</p> [cite: 40]
                 <hr style="margin: 10px 0;">
-                <p style="color: #2E5BFF; font-weight: bold; font-size: 1.1em;">€ {1200 + (i*150)}</p>
-                <p style="font-size: 0.8em;">Tech Status: <span style="color: green;">Up to date</span></p>
+                <p style="color: #2E5BFF; font-weight: bold; font-size: 1.1em;">€ {1200 + (i*150)}</p> [cite: 41]
+                <p style="font-size: 0.8em;">Tech Status: <span style="color: green;">Up to date</span></p> [cite: 42]
             </div>
             """, unsafe_allow_html=True)
             if st.button(f"Set as Target {i+1}", key=f"target_{i}"):
-                st.success(f"Orologio {i+1} impostato come Target globale") # [cite: 43]
+                st.success(f"Orologio {i+1} impostato come Target globale") [cite: 43]
 
 elif menu == "Pricing Intelligence":
-    st.header("Pricing & Value-for-Money Matrix") # [cite: 18, 45]
-    # Scatter Plot: Asse X (Prezzo), Asse Y (Power Score) [cite: 46, 47, 48]
-    fig = px.scatter(data, x='Price', y='PowerScore', color='Brand',
+    st.header("Pricing & Value-for-Money Matrix") [cite: 18, 45]
+    fig = px.scatter(data, x='Price', y='PowerScore', color='Brand', [cite: 46, 47, 48]
                      labels={'Price': 'Prezzo di listino (€)', 'PowerScore': 'Power Score (h)'})
     fig.update_layout(plot_bgcolor='rgba(0,0,0,0)')
     st.plotly_chart(fig, use_container_width=True)
 
 elif menu == "Design Intelligence":
-    st.header("White Space Heatmap") # [cite: 19, 51]
-    # Matrice: Asse X (Diametro), Asse Y (Spessore) [cite: 53, 54]
-    fig = px.density_heatmap(data, x='Diameter', y='Thickness', 
-                             color_continuous_scale='RdYlGn_r',
+    st.header("White Space Heatmap") [cite: 19, 51]
+    fig = px.density_heatmap(data, x='Diameter', y='Thickness', [cite: 52, 53, 54]
+                             color_continuous_scale='RdYlGn_r', [cite: 55]
                              labels={'Diameter': 'Diametro cassa (mm)', 'Thickness': 'Spessore (mm)'})
     st.plotly_chart(fig, use_container_width=True)
-    st.caption("Verde: Opportunità | Rosso: Saturazione") # [cite: 56, 57]
+    st.caption("Verde: Opportunità | Rosso: Saturazione") [cite: 56, 57]
 
 elif menu == "Market Intelligence":
-    st.header("Tech Evolution Tracker") # [cite: 20, 58]
+    st.header("Tech Evolution Tracker") [cite: 20, 58, 59]
+    st.subheader("🤖 AI Strategic Insights") [cite: 61]
+    st.warning("Il mercato si sta spostando verso lo standard 72h; il tuo modello attuale è al di sotto della media del 30%.") [cite: 62, 63]
+    st.success("Aumento dell'uso del Titanio (+12%) rilevato nella categoria Diver sotto i 3.000€.") [cite: 64, 65]
     
-    # Sezione AI Insights (Alert Strategici) [cite: 61]
-    st.subheader("🤖 AI Strategic Insights")
-    st.warning("Il mercato si sta spostando verso lo standard 72h; il tuo modello attuale è al di sotto della media del 30%.") # [cite: 62, 63]
-    st.success("Aumento dell'uso del Titanio (+12%) rilevato nella categoria Diver sotto i 3.000€.") # [cite: 64, 65]
-    
-    # Grafico temporale mock per Power Reserve [cite: 59, 60]
-    chart_data = pd.DataFrame(np.random.randint(42, 72, 12), columns=['Media Riserva di Carica'])
+    chart_data = pd.DataFrame(np.random.randint(42, 72, 12), columns=['Media Riserva di Carica']) [cite: 60]
     st.line_chart(chart_data)
 
 st.sidebar.markdown("---")
-st.sidebar.caption("Data Source: WatchBase Professional API") # [cite: 5]
+st.sidebar.caption("Data Source: WatchBase Professional API") [cite: 5]
