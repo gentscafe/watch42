@@ -6,17 +6,16 @@ import random
 
 USER_BRAND_NAME = "MY BRAND"
 
-# Funzione esterna alla classe per evitare NameError nella cache
 def calc_score(reserve, freq):
     return round((reserve * freq) / 10000, 2)
 
 class WatchDatabase:
-    def __init__(self, file_path='watches_v5.csv'): # v5 forza un reset pulito
+    def __init__(self, file_path='watches_v6.csv'): # v6 per forzare l'aggiornamento dei campi
         self.file_path = file_path
         self.MOVEMENT_TECH_SHEETS = {
-            "Mido 72": {"mov_brand": "Mido", "mov_reserve": 72, "mov_freq": 25200, "mov_ref": "Mido 72"},
-            "Patek 240 Q": {"mov_brand": "Patek", "mov_reserve": 48, "mov_freq": 21600, "mov_ref": "240 Q"},
-            "NH34": {"mov_brand": "Seiko", "mov_reserve": 41, "mov_freq": 21600, "mov_ref": "NH34"}
+            "Mido 72": {"mov_brand": "Mido", "mov_reserve": 72, "mov_freq": 25200, "mov_ref": "Mido 72", "mov_base": "ETA", "mov_type": "Automatic", "mov_diam": 25.6, "mov_jewels": 21},
+            "Patek 240 Q": {"mov_brand": "Patek", "mov_reserve": 48, "mov_freq": 21600, "mov_ref": "240 Q", "mov_base": "In-house", "mov_type": "Automatic", "mov_diam": 27.5, "mov_jewels": 27},
+            "NH34": {"mov_brand": "Seiko", "mov_reserve": 41, "mov_freq": 21600, "mov_ref": "NH34", "mov_base": "4R34", "mov_type": "Automatic", "mov_diam": 27.4, "mov_jewels": 24}
         }
         self.df = self.get_or_create_dataset()
 
@@ -26,17 +25,22 @@ class WatchDatabase:
             return pd.read_csv(_self.file_path)
         
         brands = [USER_BRAND_NAME, "Patek Philippe", "Rolex", "Mido"]
-        brands += [f"Independent {i}" for i in range(1, 90)]
+        brands += [f"Brand Indie {i}" for i in range(1, 90)]
         data = []
         for b in brands:
-            for i in range(1, 51):
+            for i in range(1, 21): # 20 modelli per brand per velocità
                 m_key = random.choice(list(_self.MOVEMENT_TECH_SHEETS.keys()))
                 m = _self.MOVEMENT_TECH_SHEETS[m_key]
                 p_score = calc_score(m['mov_reserve'], m['mov_freq'])
                 row = {
-                    "brand": b, "model_name": f"Model {i}", "reference": f"REF-{random.randint(1000, 9999)}",
-                    "material": random.choice(["Steel", "Gold", "Titanium"]), "diameter": random.choice([39, 40, 42]),
-                    "price_estimate": random.randint(2000, 50000), "power_score": p_score, **m
+                    "brand": b, "model_name": f"Vision {i}", "reference": f"REF-{random.randint(1000, 9999)}",
+                    "material": random.choice(["Steel", "Gold", "Titanium"]), 
+                    "diameter": random.choice([39, 40, 42]),
+                    "case_thickness": round(random.uniform(9, 14), 1),
+                    "price_estimate": random.randint(3000, 60000), 
+                    "power_score": p_score, 
+                    "watch_style": random.choice(["Diver", "Dress", "GMT"]),
+                    **m
                 }
                 data.append(row)
         df = pd.DataFrame(data)
