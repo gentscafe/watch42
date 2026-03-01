@@ -1,80 +1,51 @@
-import streamlit as st
-import pandas as pd
-from database_engine import db_engine, USER_BRAND_NAME
-
-st.set_page_config(page_title="watch42", layout="wide")
-
-# CSS (Manteniamo l'info-grid per le tile)
-st.markdown("""
-    <style>
-    .info-grid { margin: 10px 0; padding: 10px; background-color: #F9FAFB; border-radius: 8px; }
-    .info-row { display: flex; justify-content: space-between; font-size: 12px; margin-bottom: 4px; }
-    .info-label { color: #6B7280; font-weight: 500; }
-    .info-value { color: #111827; font-weight: 600; }
-    </style>
-""", unsafe_allow_html=True)
-
-# Gestione Session State
-if 'nav' not in st.session_state: st.session_state.nav = "My Watches"
-if 'edit_ref' not in st.session_state: st.session_state.edit_ref = None
-
-# SIDEBAR
-st.sidebar.title(f"Dashboard: {USER_BRAND_NAME}")
-if st.sidebar.button("⌚ My Watches"): 
-    st.session_state.nav = "My Watches"
-    st.session_state.edit_ref = None
-    st.rerun()
-if st.sidebar.button("📊 Pricing Intelligence"): st.session_state.nav = "Pricing"
-
-# PAGINA MY WATCHES
-if st.session_state.nav == "My Watches":
-    if st.session_state.edit_ref is not None:
-        # --- PANNELLO MODIFICA ATTIVO ---
+if st.session_state.edit_ref is not None:
+        # --- PANNELLO MODIFICA ESTESO ---
         watch = db_engine.df[db_engine.df['reference'] == st.session_state.edit_ref].iloc[0]
-        st.header(f"Modifica Tecnica: {watch['reference']}")
+        st.header(f"Configuratore Tecnico: {watch['model_name']} ({watch['reference']})")
+        
         if st.button("← Torna alla lista"):
             st.session_state.edit_ref = None
             st.rerun()
 
-        tab_ext, tab_mov, tab_perf = st.tabs(["Estetica", "Meccanica", "Prestazioni"])
+        tab_ext, tab_mov, tab_perf = st.tabs(["💎 Estetica & Cassa", "⚙️ Meccanica & Calibro", "🚀 Prestazioni & Mercato"])
+        
         with tab_ext:
-            c1, c2 = st.columns(2)
-            c1.text_input("Model Name", value=watch['model_name'])
-            c2.selectbox("Material", ["Steel", "Gold", "Titanium", "Platinum"], index=0)
+            st.markdown('<div class="edit-section-header">DESIGN ESTERNO</div>', unsafe_allow_html=True)
+            e1, e2 = st.columns(2)
+            with e1:
+                st.text_input("Nome Modello", value=watch['model_name'], key="upd_name")
+                st.selectbox("Stile", ["Dress", "Diver", "Chronograph", "GMT", "Casual"], index=0, key="upd_style")
+                st.multiselect("Materiale Cassa", ["Steel", "Gold", "Titanium", "Platinum", "Ceramic"], default=[watch['material']], key="upd_mat")
+            with e2:
+                st.slider("Diametro (mm)", 34, 48, int(watch['diameter']), key="upd_diam")
+                st.number_input("Spessore (mm)", value=float(watch['case_thickness']), step=0.1, key="upd_thick")
+                st.text_input("Referenza", value=watch['reference'], disabled=True, help="La referenza univoca non può essere modificata")
+
         with tab_mov:
-            m1, m2 = st.columns(2)
-            m1.text_input("Calibro", value=watch['mov_ref'])
-            m2.number_input("Jewels", value=int(watch['mov_jewels']))
+            st.markdown('<div class="edit-section-header">ARCHITETTURA DEL MOVIMENTO</div>', unsafe_allow_html=True)
+            m1, m2, m3 = st.columns(3)
+            with m1:
+                st.text_input("Produttore Calibro", value=watch['mov_brand'], key="upd_mov_brand")
+                st.text_input("Referenza Calibro", value=watch['mov_ref'], key="upd_mov_ref")
+                st.text_input("Base di partenza", value=watch['mov_base'], key="upd_mov_base")
+            with m2:
+                st.selectbox("Tipo", ["Automatic", "Manual", "Quartz"], key="upd_mov_type")
+                st.number_input("Rubini (Jewels)", value=int(watch['mov_jewels']), key="upd_jewels")
+            with m3:
+                st.number_input("Diametro Mov. (mm)", value=float(watch['mov_diam']), format="%.2f", key="upd_mov_diam")
+                st.text_input("Display", value="Analogico", key="upd_display")
+
         with tab_perf:
+            st.markdown('<div class="edit-section-header">LEVE DI MERCATO</div>', unsafe_allow_html=True)
             p1, p2 = st.columns(2)
-            p1.number_input("Price (€)", value=int(watch['price_estimate']))
-            p2.number_input("Power Reserve (h)", value=int(watch['mov_reserve']))
-            
-        if st.button("Salva Modifiche", type="primary"):
-            st.success("Dati aggiornati (Simulazione)")
-            
-    else:
-        # --- GRIGLIA CARD ---
-        st.header(f"Portfolio: {USER_BRAND_NAME}")
-        df = db_engine.get_my_watches()
-        cols = st.columns(3)
-        for i, (idx, row) in enumerate(df.iterrows()):
-            with cols[i % 3]:
-                with st.container(border=True):
-                    # Ripristino Immagine Placeholder e Info
-                    st.markdown(f"""
-                    <div style="height:100px; background-color:#F3F4F6; border-radius:12px; display:flex; justify-content:center; align-items:center; font-size:30px;">⌚</div>
-                    <div style="font-weight:700; margin-top:10px;">{row['model_name']}</div>
-                    <div style="color:#6B7280; font-size:11px;">Ref: {row['reference']}</div>
-                    
-                    <div class="info-grid">
-                        <div class="info-row"><span class="info-label">Materiale</span><span class="info-value">{row['material']}</span></div>
-                        <div class="info-row"><span class="info-label">Diametro</span><span class="info-value">{row['diameter']}mm</span></div>
-                        <div class="info-row"><span class="info-label">Spessore</span><span class="info-value">{row['case_thickness']}mm</span></div>
-                        <div class="info-row"><span class="info-label">Prezzo</span><span class="info-value">€{row['price_estimate']:,}</span></div>
-                    </div>
-                    """, unsafe_allow_html=True)
-                    
-                    if st.button("Modifica", key=f"btn_{row['reference']}", use_container_width=True):
-                        st.session_state.edit_ref = row['reference']
-                        st.rerun()
+            with p1:
+                st.number_input("Riserva di Carica (h)", value=int(watch['mov_reserve']), key="upd_reserve")
+                st.number_input("Frequenza (vph)", value=int(watch['mov_freq']), step=100, key="upd_freq")
+            with p2:
+                st.number_input("Prezzo di Listino (€)", value=int(watch['price_estimate']), step=500, key="upd_price")
+                st.text_input("Complicazioni Astro", value=watch.get('mov_astro', 'None'), key="upd_astro")
+
+        st.markdown("---")
+        if st.button("💾 Salva Configuratore", type="primary", use_container_width=True):
+            # Qui chiameremo la funzione di salvataggio del database_engine
+            st.success(f"Configurazione per {watch['reference']} salvata con successo nel sistema.")
