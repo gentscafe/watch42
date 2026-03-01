@@ -1,7 +1,12 @@
 import streamlit as st
 import pandas as pd
-import numpy as np
-from database_engine import db_engine  # Utilizzo del nuovo motore dati
+from database_engine import db_engine
+
+# QUESTA DEVE ESSERE LA PRIMA RIGA DI CODICE STREAMLIT
+st.set_page_config(page_title="watch42 | Market Intelligence", layout="wide")
+
+# Solo DOPO puoi inserire il CSS o altri st.markdown
+st.markdown("<style>...</style>", unsafe_allow_html=True)
 
 # 1. CONFIGURAZIONE PAGINA (Deve essere il primo comando Streamlit)
 st.set_page_config(page_title="watch42 | Market Intelligence", layout="wide")
