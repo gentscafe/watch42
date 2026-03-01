@@ -6,7 +6,7 @@ import numpy as np
 # 1. CONFIGURAZIONE PAGINA
 st.set_page_config(page_title="watch42 | Market Intelligence", layout="wide")
 
-# 2. CSS AVANZATO (Correzione definitiva per card e sidebar)
+# 2. CSS AVANZATO (Correzione per card e sidebar allineata a sinistra)
 st.markdown("""
     <style>
     .main { background-color: #F8F9FC; }
@@ -15,7 +15,7 @@ st.markdown("""
         border-right: 1px solid #E5E7EB !important;
     }
     
-    /* Stile per le card */
+    /* Stile professionale per le card degli orologi */
     .watch-card {
         background-color: #FFFFFF;
         padding: 20px;
@@ -42,12 +42,15 @@ st.markdown("""
         padding: 10px 0;
         border-top: 1px solid #F3F4F6;
         border-bottom: 1px solid #F3F4F6;
+        background-color: #F9FAFB;
+        border-radius: 8px;
     }
 
     .detail-row {
         display: flex;
         justify-content: space-between;
         margin-bottom: 5px;
+        padding: 0 10px;
         font-size: 13px;
     }
 
@@ -69,7 +72,7 @@ st.markdown("""
     </style>
 """, unsafe_allow_html=True)
 
-# 3. DATI PULITI (Estraiamo i valori correttamente)
+# 3. DATI PULITI (Struttura a dizionario per evitare errori di tipo)
 @st.cache_data
 def get_clean_data():
     return [
@@ -85,12 +88,17 @@ watches = get_clean_data()
 
 # 4. SIDEBAR
 st.sidebar.title("watch42")
-if 'menu' not in st.session_state: st.session_state.menu = "My Watches"
+if 'menu' not in st.session_state: 
+    st.session_state.menu = "My Watches"
 
-if st.sidebar.button("⌚ My Watches"): st.session_state.menu = "My Watches"
-if st.sidebar.button("📊 Pricing Intelligence"): st.session_state.menu = "Pricing Intelligence"
-if st.sidebar.button("🗺️ Design Intelligence"): st.session_state.menu = "Design Intelligence"
-if st.sidebar.button("📈 Market Intelligence"): st.session_state.menu = "Market Intelligence"
+if st.sidebar.button("⌚ My Watches"): 
+    st.session_state.menu = "My Watches"
+if st.sidebar.button("📊 Pricing Intelligence"): 
+    st.session_state.menu = "Pricing Intelligence"
+if st.sidebar.button("🗺️ Design Intelligence"): 
+    st.session_state.menu = "Design Intelligence"
+if st.sidebar.button("📈 Market Intelligence"): 
+    st.session_state.menu = "Market Intelligence"
 
 # 5. VISTA "MY WATCHES"
 if st.session_state.menu == "My Watches":
@@ -99,7 +107,7 @@ if st.session_state.menu == "My Watches":
     cols = st.columns(3)
     for i, w in enumerate(watches):
         with cols[i % 3]:
-            # Utilizziamo una f-string pulita per l'HTML
+            # HTML per la card dell'orologio con estrazione dati puntuale
             card_html = f"""
             <div class="watch-card">
                 <div class="card-image-placeholder">⌚</div>
