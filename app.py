@@ -3,15 +3,22 @@ import pandas as pd
 import plotly.express as px
 from database_engine import db_engine, USER_BRAND_NAME
 
+# 1. SETUP
 st.set_page_config(page_title="watch42", layout="wide")
 
 if 'nav' not in st.session_state: st.session_state.nav = "My Watches"
 if 'edit_ref' not in st.session_state: st.session_state.edit_ref = None
 
-# --- SIDEBAR ---
+# 2. PULIZIA DATI FORZATA (Assicura che il grafico veda numeri)
+df_main = db_engine.df.copy()
+for col in ['price_estimate', 'mov_reserve', 'case_thickness', 'power_score']:
+    df_main[col] = pd.to_numeric(df_main[col], errors='coerce').fillna(0.0)
+
+# 3. SIDEBAR
 st.sidebar.title(f"Admin: {USER_BRAND_NAME}")
 if st.sidebar.button("⌚ My Watches", use_container_width=True):
     st.session_state.nav = "My Watches"
+    st.session_state.edit_ref = None
     st.rerun()
 if st.sidebar.button("📊 Pricing Intelligence", use_container_width=True):
     st.session_state.nav = "Pricing"
@@ -20,65 +27,82 @@ if st.sidebar.button("🗄️ Database Explorer", use_container_width=True):
     st.session_state.nav = "Explorer"
     st.rerun()
 
-# --- VISTA: MY WATCHES (Invariata) ---
+# --- VISTA: MY WATCHES ---
 if st.session_state.nav == "My Watches":
     st.header(f"Portfolio: {USER_BRAND_NAME}")
-    # ... logica card esistente ...
+    
+    # Filtriamo i dati per il tuo brand
+    my_df = df_main[df_main['brand'] == USER_BRAND_NAME]
+    
+    if st.session_state.edit_ref:
+        # PANNELLO MODIFICA
+        watch_data = my_df[my_df['reference'] == st.session_state.edit_ref]
+        if not watch_data.empty:
+            watch = watch_data.iloc[0]
+            st.subheader(f"Modifica: {watch['model_name']}")
+            if st.button("← Indietro"):
+                st.session_state.edit_ref = None
+                st.rerun()
+            
+            new_price = st.number_input("Prezzo (€)", value=float(watch['price_estimate']))
+            if st.button("Salva"):
+                db_engine.update_watch_data(st.session_state.edit_ref, {"price_estimate": new_price})
+                st.success("Salvato!")
+                st.session_state.edit_ref = None
+                st.rerun()
+    else:
+        # GRIGLIA CARD (Con protezione errore)
+        if my_df.empty:
+            st.warning("Nessun orologio trovato per il tuo brand.")
+        else:
+            cols = st.columns(3)
+            for i, (idx, row) in enumerate(my_df.iterrows()):
+                with cols[i % 3]:
+                    with st.container(border=True):
+                        st.markdown(f"### {row['model_name']}")
+                        st.write(f"Ref: {row['reference']}")
+                        st.write(f"**Prezzo: €{row['price_estimate']:,}**")
+                        if st.button("📝 Modifica", key=f"btn_{row['reference']}", use_container_width=True):
+                            st.session_state.edit_ref = row['reference']
+                            st.rerun()
 
-# --- VISTA: PRICING INTELLIGENCE (Grafico Corretto) ---
+# --- VISTA: PRICING INTELLIGENCE ---
 elif st.session_state.nav == "Pricing":
-    st.header("📊 Pricing Intelligence Matrix")
+    st.header("📊 Analisi di Mercato")
     
-    c1, c2 = st.columns(2)
-    y_map = {"mov_reserve": "Riserva di Carica", "case_thickness": "Spessore", "power_score": "Power Score"}
-    y_choice = c1.selectbox("Asse Y", options=list(y_map.keys()), format_func=lambda x: y_map[x])
-    
-    my_watches = db_engine.df[db_engine.df['brand'] == USER_BRAND_NAME]
-    target_ref = c2.selectbox("Orologio Target", options=my_watches['reference'].tolist())
+    try:
+        c1, c2 = st.columns(2)
+        y_map = {"mov_reserve": "Riserva di Carica", "case_thickness": "Spessore", "power_score": "Power Score"}
+        y_choice = c1.selectbox("Parametro Asse Y", options=list(y_map.keys()), format_func=lambda x: y_map[x])
+        
+        my_watches = df_main[df_main['brand'] == USER_BRAND_NAME]
+        target_ref = c2.selectbox("Orologio Target", options=my_watches['reference'].tolist())
 
-    df_plot = db_engine.df.copy()
-    df_plot['Status'] = 'Competitor'
-    df_plot.loc[df_plot['brand'] == USER_BRAND_NAME, 'Status'] = 'Il Tuo Brand'
-    df_plot.loc[df_plot['reference'] == target_ref, 'Status'] = 'TARGET'
+        # Prepariamo il DF per il grafico con categorie stringa esplicite
+        df_plot = df_main.copy()
+        df_plot['Categoria'] = 'Altro'
+        df_plot.loc[df_plot['brand'] == USER_BRAND_NAME, 'Categoria'] = 'Mio Brand'
+        df_plot.loc[df_plot['reference'] == target_ref, 'Categoria'] = 'TARGET'
 
-    # Forza Plotly a leggere i dati come numeri
-    fig = px.scatter(
-        df_plot, x="price_estimate", y=y_choice, color="Status",
-        hover_name="brand", hover_data=["model_name", "reference"],
-        color_discrete_map={'Competitor': '#D1D5DB', 'Il Tuo Brand': '#2E5BFF', 'TARGET': '#EF4444'},
-        labels={"price_estimate": "Prezzo (€)", y_choice: y_map[y_choice]},
-        height=600, template="plotly_white"
-    )
-    fig.update_traces(marker=dict(size=12, opacity=0.7))
-    fig.update_traces(marker=dict(size=25, symbol="star", opacity=1), selector=dict(name='TARGET'))
-    st.plotly_chart(fig, use_container_width=True)
+        fig = px.scatter(
+            df_plot, 
+            x="price_estimate", 
+            y=y_choice, 
+            color="Categoria",
+            hover_name="brand",
+            color_discrete_map={'Altro': '#D1D5DB', 'Mio Brand': '#2E5BFF', 'TARGET': '#EF4444'},
+            labels={"price_estimate": "Prezzo (€)", y_choice: y_map[y_choice]},
+            height=600,
+            template="plotly_white"
+        )
+        fig.update_traces(marker=dict(size=10, opacity=0.6))
+        fig.update_traces(marker=dict(size=20, symbol="star"), selector=dict(name='TARGET'))
+        
+        st.plotly_chart(fig, use_container_width=True)
+    except Exception as e:
+        st.error(f"Errore nel generare il grafico: {e}")
 
-# --- VISTA: DATABASE EXPLORER (Nuova Sezione) ---
+# --- VISTA: EXPLORER ---
 elif st.session_state.nav == "Explorer":
-    st.header("🗄️ Database Explorer & Filtri Avanzati")
-    df_exp = db_engine.df.copy()
-    
-    # Barra dei Filtri
-    st.markdown("### Filtra Mercato")
-    f1, f2, f3, f4 = st.columns(4)
-    
-    with f1:
-        brand_f = st.multiselect("Brand", options=df_exp['brand'].unique())
-    with f2:
-        mat_f = st.multiselect("Materiale", options=df_exp['material'].unique())
-    with f3:
-        price_range = st.slider("Range Prezzo (€)", 0, 80000, (0, 80000))
-    with f4:
-        reserve_f = st.slider("Riserva min (h)", 0, 100, 0)
-
-    # Applicazione Filtri
-    if brand_f: df_exp = df_exp[df_exp['brand'].isin(brand_f)]
-    if mat_f: df_exp = df_exp[df_exp['material'].isin(mat_f)]
-    df_exp = df_exp[(df_exp['price_estimate'] >= price_range[0]) & (df_exp['price_estimate'] <= price_range[1])]
-    df_exp = df_exp[df_exp['mov_reserve'] >= reserve_f]
-
-    st.write(f"Risultati trovati: {len(df_exp)}")
-    st.dataframe(df_exp, use_container_width=True, hide_index=True)
-    
-    # Download pulsante
-    st.download_button("Esporta CSV", df_exp.to_csv(index=False), "export_market.csv", "text/csv")
+    st.header("🗄️ Database Explorer")
+    st.dataframe(df_main, use_container_width=True)
