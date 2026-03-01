@@ -6,7 +6,7 @@ import numpy as np
 # 1. CONFIGURAZIONE PAGINA
 st.set_page_config(page_title="watch42 | Market Intelligence", layout="wide")
 
-# 2. INJECT ADVANCED CUSTOM CSS (Il "Vibe" Professionale)
+# 2. INJECT ADVANCED CUSTOM CSS (SIDEBAR PROFESSIONALE)
 def inject_custom_css():
     st.markdown("""
         <style>
@@ -15,61 +15,56 @@ def inject_custom_css():
         
         /* Sidebar pulita e minimale */
         [data-testid="stSidebar"] {
-            background-color: #FFFFFF !important;
+            background-color: #FBFBFE !important;
             border-right: 1px solid #E5E7EB !important;
         }
         
-        /* Titolo Sidebar */
-        .sidebar-title {
-            font-size: 24px;
+        /* Sezione Titolo (REPORTS nel riferimento) */
+        .sidebar-header {
+            font-size: 11px;
             font-weight: 700;
-            color: #1F2937;
-            margin-bottom: 20px;
-            padding: 0 10px;
+            color: #9CA3AF;
+            letter-spacing: 1.5px;
+            text-transform: uppercase;
+            padding: 20px 20px 10px 20px;
         }
 
-        /* Pulsanti Menu: Allineati a sinistra, senza bordi, effetto Hover */
-        .stButton > button {
+        /* RESET BOTTONI SIDEBAR: Allineamento a sinistra e stile testo */
+        [data-testid="stSidebar"] .stButton > button {
             width: 100% !important;
             border: none !important;
             background-color: transparent !important;
             text-align: left !important;
-            padding: 12px 15px !important;
-            border-radius: 10px !important;
-            color: #4B5563 !important;
+            padding: 12px 20px !important;
+            border-radius: 0px !important;
+            color: #1F2937 !important;
             font-size: 16px !important;
+            font-weight: 500 !important;
             display: flex !important;
             align-items: center !important;
-            gap: 10px !important;
+            gap: 15px !important;
+            transition: all 0.2s;
         }
         
-        .stButton > button:hover {
+        /* Effetto hover e selezione */
+        [data-testid="stSidebar"] .stButton > button:hover {
             background-color: #F3F4F6 !important;
             color: #2E5BFF !important;
         }
 
-        /* CARD STYLE: Ombre morbide e bordi arrotondati */
+        /* CARD STYLE: Ombre morbide */
         .watch-card {
             background-color: #FFFFFF;
             padding: 24px;
             border-radius: 20px;
-            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.05), 0 4px 6px -2px rgba(0, 0, 0, 0.02);
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.05);
             border: 1px solid #F3F4F6;
             margin-bottom: 20px;
-            transition: transform 0.2s;
-        }
-        .watch-card:hover {
-            transform: translateY(-5px);
         }
 
-        /* Typography per le Card */
-        .card-title { font-size: 18px; font-weight: 600; color: #111827; margin-bottom: 4px; }
-        .card-ref { font-size: 13px; color: #6B7280; margin-bottom: 15px; }
-        .card-price { font-size: 22px; font-weight: 700; color: #2E5BFF; }
-        .card-status { font-size: 12px; font-weight: 500; padding: 4px 8px; border-radius: 6px; background: #ECFDF5; color: #059669; }
-
-        /* Nasconde i pallini dei radio button standard se presenti */
-        [data-testid="stMarkdownContainer"] p { margin-bottom: 0; }
+        .card-title { font-size: 18px; font-weight: 600; color: #111827; }
+        .card-price { font-size: 22px; font-weight: 700; color: #2E5BFF; margin-top: 10px; }
+        .card-status { font-size: 12px; color: #059669; font-weight: 600; }
         </style>
     """, unsafe_allow_html=True)
 
@@ -78,25 +73,24 @@ inject_custom_css()
 # 3. MOCK DATA
 @st.cache_data
 def get_mock_data():
-    brands = ["Mido", "Patek Philippe", "Audemars Piguet", "Rolex", "Cartier"]
     return pd.DataFrame({
         'Model': [f'Watch {i}' for i in range(25)],
         'Price': np.random.randint(800, 50000, 25),
         'PowerScore': np.random.randint(38, 80, 25),
         'Diameter': np.random.randint(34, 48, 25),
         'Thickness': np.random.randint(6, 18, 25),
-        'Brand': np.random.choice(brands, 25)
+        'Brand': np.random.choice(["Mido", "Rolex", "Cartier"], 25)
     })
 
 data = get_mock_data()
 
-# 4. SIDEBAR NAVIGATION (Menu con icone e allineamento corretto)
-st.sidebar.markdown('<div class="sidebar-title">watch42</div>', unsafe_allow_html=True)
+# 4. SIDEBAR NAVIGATION (Esattamente come Screenshot 14.43.19)
+st.sidebar.markdown('<div class="sidebar-header">MENU</div>', unsafe_allow_html=True)
 
 if 'menu' not in st.session_state:
     st.session_state.menu = "My Watches"
 
-# Pulsanti stilizzati come voci di menu 
+# Navigazione con icone pulite e allineamento a sinistra
 if st.sidebar.button("⌚  My Watches"):
     st.session_state.menu = "My Watches"
 if st.sidebar.button("📊  Pricing Intelligence"):
@@ -106,49 +100,35 @@ if st.sidebar.button("🗺️  Design Intelligence"):
 if st.sidebar.button("📈  Market Intelligence"):
     st.session_state.menu = "Market Intelligence"
 
-# 5. VISTE CORE
+# 5. VISTE
+menu = st.session_state.menu
 
-if st.session_state.menu == "My Watches":
+if menu == "My Watches":
     st.header("My Watches")
-    st.caption("Visualizzazione a griglia degli orologi del brand[cite: 16].")
-    
     cols = st.columns(3)
     for i in range(6):
         with cols[i % 3]:
-            # Card HTML personalizzata per il look premium [cite: 39, 41]
             st.markdown(f"""
             <div class="watch-card">
                 <div class="card-title">All Dial Model {i+1}</div>
-                <div class="card-ref">Ref: M001.431.11.0{i}1.02</div>
-                <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 20px;">
-                    <div class="card-price">€ {1200 + (i*150)}</div>
-                    <div class="card-status">Up to date</div>
-                </div>
+                <div style="color: #6B7280; font-size: 13px;">Ref: M001.431.11.0{i}1.02</div>
+                <div class="card-price">€ {1200 + (i*150)}</div>
+                <div class="card-status">● Up to date</div>
             </div>
             """, unsafe_allow_html=True)
-            # Bottone d'azione discreto [cite: 43]
-            if st.button(f"Set as Target", key=f"target_{i}"):
-                st.toast(f"Modello {i+1} impostato come Target!")
+            st.button(f"Set as Target", key=f"target_{i}")
 
-elif st.session_state.menu == "Pricing Intelligence":
+elif menu == "Pricing Intelligence":
     st.header("Pricing Intelligence")
-    fig = px.scatter(data, x='Price', y='PowerScore', color='Brand',
-                     labels={'Price': 'Prezzo (€)', 'PowerScore': 'Power Score'})
-    fig.update_layout(plot_bgcolor='rgba(0,0,0,0)', paper_bgcolor='rgba(0,0,0,0)')
+    fig = px.scatter(data, x='Price', y='PowerScore', color='Brand')
     st.plotly_chart(fig, use_container_width=True)
 
-elif st.session_state.menu == "Design Intelligence":
+elif menu == "Design Intelligence":
     st.header("Design Intelligence")
-    fig = px.density_heatmap(data, x='Diameter', y='Thickness',
-                             color_continuous_scale='RdYlGn_r',
-                             labels={'Diameter': 'Diametro (mm)', 'Thickness': 'Spessore (mm)'})
+    fig = px.density_heatmap(data, x='Diameter', y='Thickness')
     st.plotly_chart(fig, use_container_width=True)
 
-elif st.session_state.menu == "Market Intelligence":
+elif menu == "Market Intelligence":
     st.header("Market Intelligence")
-    st.subheader("🤖 AI Strategic Insights")
-    st.warning("Il mercato si sta spostando verso lo standard 72h[cite: 62].")
-    st.success("Aumento dell'uso del Titanio (+12%) rilevato[cite: 64].")
-    st.line_chart(pd.DataFrame(np.random.randint(42, 72, 12), columns=['Media Riserva di Carica']))
-
-st.sidebar.markdown("---")
+    st.warning("Trend Alert: Il mercato si sta spostando verso lo standard 72h.")
+    st.line_chart(np.random.randint(42, 72, 12))
