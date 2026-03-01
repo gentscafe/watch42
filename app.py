@@ -1,146 +1,124 @@
 import streamlit as st
 import pandas as pd
 import plotly.express as px
-import plotly.graph_objects as go
 import numpy as np
 
-# Configurazione Pagina
+# 1. CONFIGURAZIONE PAGINA (Vibe Clean-Tech)
 st.set_page_config(page_title="watch42 | Market Intelligence", layout="wide")
 
-# --- INJECT CUSTOM CSS (IL VIBE) ---
+# 2. INJECT CUSTOM CSS (Replica il look & feel dell'immagine di riferimento)
 def inject_custom_css():
     st.markdown("""
         <style>
-        /* Sfondo e font generale */
         .main { background-color: #F8F9FC; }
-        
-        /* Sidebar Styling */
         [data-testid="stSidebar"] {
             background-color: #FFFFFF;
             border-right: 1px solid #E5E7EB;
         }
-        
-        /* Card Style per Metric e Componenti */
         div[data-testid="metric-container"], .stPlotlyChart {
             background-color: #FFFFFF;
             padding: 20px;
             border-radius: 15px;
-            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
             border: 1px solid #F3F4F6;
         }
-        
-        /* Bottoni e Interazioni */
         .stButton>button {
             border-radius: 10px;
             background-color: #2E5BFF;
             color: white;
             border: none;
-            transition: all 0.3s;
-        }
-        .stButton>button:hover {
-            background-color: #1A44D1;
-            transform: translateY(-2px);
+            width: 100%;
         }
         </style>
     """, unsafe_allow_html=True)
 
 inject_custom_css()
 
-# --- MOCK DATA GENERATION ---
+# 3. MOCK DATA (In attesa di WatchBase Professional API)
 @st.cache_data
-def get_mock_data():
-    brands = ["Patek Philippe", "Audemars Piguet", "Vacheron Constantin", "Rolex", "Mido"]
+def get_watchbase_mock_data():
+    brands = ["Mido", "Patek Philippe", "Audemars Piguet", "Rolex", "Cartier"]
     df = pd.DataFrame({
-        'Model': [f'Watch {i}' for i in range(20)],
-        'Price': np.random.randint(2000, 50000, 20),
-        'PowerScore': np.random.randint(40, 100, 20),
-        'Diameter': np.random.randint(34, 48, 20),
-        'Thickness': np.random.randint(6, 18, 20),
-        'Brand': np.random.choice(brands, 20)
+        'Model': [f'Watch {i}' for i in range(25)],
+        'Price': np.random.randint(800, 50000, 25),
+        'PowerScore': np.random.randint(38, 80, 25),
+        'Diameter': np.random.randint(34, 48, 25),
+        'Thickness': np.random.randint(6, 18, 25),
+        'Brand': np.random.choice(brands, 25),
+        'Movement': np.random.choice(["Automatic", "Manual", "Quartz"], 25)
     })
     return df
 
-data = get_mock_data()
+data = get_watchbase_mock_data()
 
-# --- SIDEBAR NAVIGATION ---
+# 4. SIDEBAR NAVIGATION (Architettura Sidebar Sinistra)
 st.sidebar.title("watch42")
-st.sidebar.caption("v1.0 MVP - WatchBase API") [cite: 2, 5]
+st.sidebar.caption("v1.0 MVP - WatchBase API")
 
 menu = st.sidebar.radio(
-    "NAVIGATION",
+    "MENU",
     ["My Watches", "Pricing Intelligence", "Design Intelligence", "Market Intelligence"],
     index=0
-) [cite: 16, 18, 19, 20]
+)
 
-# --- GLOBAL FILTERS (PANNELLO FILTRI) ---
+# 5. DEFINIZIONE DEI FILTRI (Data Schema: WatchBase)
 with st.sidebar.expander("🔍 FILTERS", expanded=True):
-    brand_filter = st.multiselect("Brand", options=data['Brand'].unique()) [cite: 26]
-    material = st.selectbox("Case Material", ["Steel", "Titanium", "Gold", "Bronze"]) [cite: 30]
-    diameter_range = st.slider("Diameter (mm)", 34, 48, (38, 42)) [cite: 32]
-    # Spazio per futuri filtri WatchBase (Caliber, Glass, WR) [cite: 25, 28, 31, 34]
+    brand_sel = st.multiselect("Brand (Top 25)", options=data['Brand'].unique()) # [cite: 26]
+    movement_sel = st.selectbox("Movement", ["Automatic", "Manual", "Quartz"]) # [cite: 29]
+    case_material = st.multiselect("Case Material", ["Steel", "Titanium", "Gold", "Bronze", "Carbon"]) # [cite: 30]
+    diameter = st.slider("Diameter (mm)", 34, 48, (38, 42)) # [cite: 32]
+    thickness = st.slider("Thickness (mm)", 6, 18, (8, 14)) # [cite: 33]
 
-# --- MAIN VIEWS ---
+# 6. VISTE CORE
 
 if menu == "My Watches":
-    st.header("My Watches")
-    st.info("Select a card to set the global 'Target' watch for comparisons.") [cite: 43]
+    st.header("My Watches (Landing View)") # [cite: 16, 38]
+    st.write("Visualizzazione a griglia degli orologi del brand.")
     
-    # Grid Layout per Card
     cols = st.columns(3)
     for i in range(6):
         with cols[i % 3]:
+            # Card eleganti basate sulle specifiche [cite: 39, 40]
             st.markdown(f"""
-            <div style="background: white; padding: 20px; border-radius: 15px; border: 1px solid #EEE;">
-                <img src="https://via.placeholder.com/150" style="width:100%; border-radius:10px;">
-                <h4 style="margin-top:10px;">Model {i+1}</h4>
-                <p style="color: gray; font-size: 0.8em;">Ref: 12345-ABC</p>
-                <hr>
-                <p><b>Price:</b> €{12000 + (i*1000)}</p>
-                <p><b>Status:</b> <span style="color: green;">Up to date</span></p>
+            <div style="background: white; padding: 15px; border-radius: 12px; border: 1px solid #EEE; margin-bottom: 10px;">
+                <p style="font-weight: bold; margin-bottom: 2px;">All Dial Model {i+1}</p>
+                <p style="font-size: 0.8em; color: gray;">Ref: M001.431.11.0{i}1.02</p>
+                <hr style="margin: 10px 0;">
+                <p style="color: #2E5BFF; font-weight: bold; font-size: 1.1em;">€ {1200 + (i*150)}</p>
+                <p style="font-size: 0.8em;">Tech Status: <span style="color: green;">Up to date</span></p>
             </div>
             """, unsafe_allow_html=True)
-            if st.button(f"Set Target {i+1}", key=f"btn_{i}"):
-                st.session_state.target = f"Model {i+1}" [cite: 38, 39, 40, 41, 42]
+            if st.button(f"Set as Target {i+1}", key=f"target_{i}"):
+                st.success(f"Orologio {i+1} impostato come Target globale") # [cite: 43]
 
 elif menu == "Pricing Intelligence":
-    st.header("Pricing & Value-for-Money Matrix") [cite: 18, 45]
-    
-    fig = px.scatter(data, x='Price', y='PowerScore', color='Brand', 
-                     title="Scatter Plot: Price vs Power Score") [cite: 46, 47, 48]
-    fig.update_layout(plot_bgcolor='white', paper_bgcolor='rgba(0,0,0,0)')
+    st.header("Pricing & Value-for-Money Matrix") # [cite: 18, 45]
+    # Scatter Plot: Asse X (Prezzo), Asse Y (Power Score) [cite: 46, 47, 48]
+    fig = px.scatter(data, x='Price', y='PowerScore', color='Brand',
+                     labels={'Price': 'Prezzo di listino (€)', 'PowerScore': 'Power Score (h)'})
+    fig.update_layout(plot_bgcolor='rgba(0,0,0,0)')
     st.plotly_chart(fig, use_container_width=True)
-    st.caption("Dots are static. Only Target watch is highlighted in real-time comparison.") [cite: 49, 50]
 
 elif menu == "Design Intelligence":
-    st.header("White Space Heatmap") [cite: 19, 51]
-    
-    # Generazione Heatmap fittizia basata su Diameter e Thickness
-    heatmap_data = np.histogram2d(data['Diameter'], data['Thickness'], bins=[7, 6])[0]
-    fig = px.imshow(heatmap_data, 
-                    labels=dict(x="Thickness (mm)", y="Diameter (mm)", color="Density"),
-                    x=[6, 8, 10, 12, 14, 16],
-                    y=[34, 36, 38, 40, 42, 44, 46],
-                    color_continuous_scale='RdYlGn_r') # Green: Opportunity, Red: Saturated [cite: 55, 56, 57]
+    st.header("White Space Heatmap") # [cite: 19, 51]
+    # Matrice: Asse X (Diametro), Asse Y (Spessore) [cite: 53, 54]
+    fig = px.density_heatmap(data, x='Diameter', y='Thickness', 
+                             color_continuous_scale='RdYlGn_r',
+                             labels={'Diameter': 'Diametro cassa (mm)', 'Thickness': 'Spessore (mm)'})
     st.plotly_chart(fig, use_container_width=True)
+    st.caption("Verde: Opportunità | Rosso: Saturazione") # [cite: 56, 57]
 
 elif menu == "Market Intelligence":
-    st.header("Tech Evolution Tracker") [cite: 20, 58]
+    st.header("Tech Evolution Tracker") # [cite: 20, 58]
     
-    # Time Series Mock
-    dates = pd.date_range(start='2020-01-01', periods=12, freq='M')
-    power_reserve_avg = [42, 42, 45, 48, 50, 50, 60, 65, 70, 72, 72, 72]
+    # Sezione AI Insights (Alert Strategici) [cite: 61]
+    st.subheader("🤖 AI Strategic Insights")
+    st.warning("Il mercato si sta spostando verso lo standard 72h; il tuo modello attuale è al di sotto della media del 30%.") # [cite: 62, 63]
+    st.success("Aumento dell'uso del Titanio (+12%) rilevato nella categoria Diver sotto i 3.000€.") # [cite: 64, 65]
     
-    fig = px.line(x=dates, y=power_reserve_avg, title="Average Power Reserve Evolution (Industry)") [cite: 59, 60]
-    st.plotly_chart(fig, use_container_width=True)
-    
-    # AI INSIGHTS PANEL
-    st.subheader("🤖 AI Strategic Insights") [cite: 61]
-    col_ai1, col_ai2 = st.columns(2)
-    with col_ai1:
-        st.warning("Standard 72h detected: Your model is 30% below industry average.") [cite: 62, 63]
-    with col_ai2:
-        st.success("Titanium Trend: +12% increase in Diver category (< 3,000€).") [cite: 64, 65]
+    # Grafico temporale mock per Power Reserve [cite: 59, 60]
+    chart_data = pd.DataFrame(np.random.randint(42, 72, 12), columns=['Media Riserva di Carica'])
+    st.line_chart(chart_data)
 
-# --- FOOTER ---
 st.sidebar.markdown("---")
-st.sidebar.info("Data source: WatchBase Professional API") [cite: 5]
+st.sidebar.caption("Data Source: WatchBase Professional API") # [cite: 5]
