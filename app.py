@@ -8,7 +8,7 @@ st.set_page_config(page_title="watch42", layout="wide")
 if 'nav' not in st.session_state: st.session_state.nav = "My Watches"
 if 'edit_ref' not in st.session_state: st.session_state.edit_ref = None
 
-# SIDEBAR
+# --- SIDEBAR ---
 st.sidebar.title(f"Admin: {USER_BRAND_NAME}")
 if st.sidebar.button("⌚ My Watches", use_container_width=True):
     st.session_state.nav = "My Watches"
@@ -53,7 +53,7 @@ if st.session_state.nav == "My Watches":
 elif st.session_state.nav == "Pricing":
     st.header("📊 Pricing Intelligence Matrix")
     
-    # Selettori orizzontali
+    # Selettori in riga sopra il grafico
     c1, c2 = st.columns(2)
     y_map = {
         "mov_reserve": "Riserva di Carica (h)", 
@@ -63,23 +63,23 @@ elif st.session_state.nav == "Pricing":
     y_choice = c1.selectbox("Seleziona parametro tecnico (Asse Y)", options=list(y_map.keys()), format_func=lambda x: y_map[x])
     
     my_df = db_engine.get_my_watches()
-    target_ref = c2.selectbox("Seleziona il tuo orologio di riferimento (Target)", options=my_df['reference'].tolist())
+    target_ref = c2.selectbox("Seleziona il tuo orologio Target", options=my_df['reference'].tolist())
 
-    # Preparazione dati grafico
+    # Preparazione Dati
     df_plot = db_engine.df.copy()
     df_plot['Status'] = 'Competitor'
-    df_plot.loc[df_plot['brand'] == USER_BRAND_NAME, 'Status'] = 'I Tuoi Brand'
+    df_plot.loc[df_plot['brand'] == USER_BRAND_NAME, 'Status'] = 'Il Tuo Brand'
     df_plot.loc[df_plot['reference'] == target_ref, 'Status'] = 'TARGET'
 
-    # Grafico Scatter (senza errori di indentazione)
-        fig = px.scatter(
+    # Creazione Grafico (Indentazione Corretta)
+    fig = px.scatter(
         df_plot,
         x="price_estimate",
         y=y_choice,
         color="Status",
         hover_name="brand",
         hover_data=["model_name", "reference"],
-        color_discrete_map={'Competitor': '#D1D5DB', 'I Tuoi Brand': '#2E5BFF', 'TARGET': '#EF4444'},
+        color_discrete_map={'Competitor': '#D1D5DB', 'Il Tuo Brand': '#2E5BFF', 'TARGET': '#EF4444'},
         labels={"price_estimate": "Prezzo (€)", y_choice: y_map[y_choice]},
         height=600,
         template="plotly_white"
