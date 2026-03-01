@@ -1,12 +1,11 @@
 import streamlit as st
 import pandas as pd
-import plotly.express as px
 import numpy as np
 
 # 1. CONFIGURAZIONE PAGINA
 st.set_page_config(page_title="watch42 | Market Intelligence", layout="wide")
 
-# 2. CSS AVANZATO (Correzione per card e sidebar allineata a sinistra)
+# 2. CSS DEFINITIVO (Iniettato globalmente)
 st.markdown("""
     <style>
     .main { background-color: #F8F9FC; }
@@ -15,15 +14,15 @@ st.markdown("""
         border-right: 1px solid #E5E7EB !important;
     }
     
-    /* Stile professionale per le card degli orologi */
+    /* Stile professionale per le card */
     .watch-card {
         background-color: #FFFFFF;
         padding: 20px;
         border-radius: 20px;
         box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.05);
         border: 1px solid #F3F4F6;
-        margin-bottom: 20px;
-        font-family: 'Inter', sans-serif;
+        margin-bottom: 10px;
+        font-family: sans-serif;
     }
     
     .card-image-placeholder {
@@ -39,25 +38,22 @@ st.markdown("""
 
     .watch-details {
         margin: 15px 0;
-        padding: 10px 0;
-        border-top: 1px solid #F3F4F6;
-        border-bottom: 1px solid #F3F4F6;
+        padding: 12px;
         background-color: #F9FAFB;
-        border-radius: 8px;
+        border-radius: 10px;
     }
 
     .detail-row {
         display: flex;
         justify-content: space-between;
-        margin-bottom: 5px;
-        padding: 0 10px;
+        margin-bottom: 6px;
         font-size: 13px;
     }
 
     .detail-label { color: #6B7280; font-weight: 500; }
     .detail-value { color: #111827; font-weight: 600; }
     
-    /* Sidebar Allineamento Sinistra */
+    /* Allineamento Sidebar */
     [data-testid="stSidebar"] .stButton > button {
         width: 100% !important;
         border: none !important;
@@ -72,32 +68,31 @@ st.markdown("""
     </style>
 """, unsafe_allow_html=True)
 
-# 3. DATI PULITI (Struttura a dizionario per evitare errori di tipo)
-@st.cache_data
+# 3. DATI PULITI (Lista di dizionari per evitare errori Pandas)
 def get_clean_data():
     return [
-        {"Model": "All Dial Model 1", "Ref": "M001.431.11.001.02", "Price": 1200, "Mat": "Steel", "Dia": "42mm", "Mov": "Manual"},
-        {"Model": "All Dial Model 2", "Ref": "M001.431.11.011.02", "Price": 1350, "Mat": "Titanium", "Dia": "38mm", "Mov": "Manual"},
-        {"Model": "All Dial Model 3", "Ref": "M001.431.11.021.02", "Price": 1500, "Mat": "Titanium", "Dia": "38mm", "Mov": "Manual"},
-        {"Model": "All Dial Model 4", "Ref": "M001.431.11.031.02", "Price": 1650, "Mat": "Steel", "Dia": "40mm", "Mov": "Manual"},
-        {"Model": "All Dial Model 5", "Ref": "M001.431.11.041.02", "Price": 1800, "Mat": "Gold", "Dia": "42mm", "Mov": "Automatic"},
-        {"Model": "All Dial Model 6", "Ref": "M001.431.11.051.02", "Price": 1950, "Mat": "Steel", "Dia": "38mm", "Mov": "Automatic"}
+        {"Model": "All Dial Model 1", "Ref": "M001.431.11.001.02", "Price": "1.200", "Mat": "Steel", "Dia": "42mm", "Mov": "Manual"},
+        {"Model": "All Dial Model 2", "Ref": "M001.431.11.011.02", "Price": "1.350", "Mat": "Titanium", "Dia": "38mm", "Mov": "Manual"},
+        {"Model": "All Dial Model 3", "Ref": "M001.431.11.021.02", "Price": "1.500", "Mat": "Titanium", "Dia": "38mm", "Mov": "Manual"},
+        {"Model": "All Dial Model 4", "Ref": "M001.431.11.031.02", "Price": "1.650", "Mat": "Steel", "Dia": "40mm", "Mov": "Manual"},
+        {"Model": "All Dial Model 5", "Ref": "M001.431.11.041.02", "Price": "1.800", "Mat": "Gold", "Dia": "42mm", "Mov": "Automatic"},
+        {"Model": "All Dial Model 6", "Ref": "M001.431.11.051.02", "Price": "1.950", "Mat": "Steel", "Dia": "38mm", "Mov": "Automatic"}
     ]
 
 watches = get_clean_data()
 
 # 4. SIDEBAR
 st.sidebar.title("watch42")
-if 'menu' not in st.session_state: 
+if 'menu' not in st.session_state:
     st.session_state.menu = "My Watches"
 
-if st.sidebar.button("⌚ My Watches"): 
+if st.sidebar.button("⌚ My Watches"):
     st.session_state.menu = "My Watches"
-if st.sidebar.button("📊 Pricing Intelligence"): 
+if st.sidebar.button("📊 Pricing Intelligence"):
     st.session_state.menu = "Pricing Intelligence"
-if st.sidebar.button("🗺️ Design Intelligence"): 
+if st.sidebar.button("🗺️ Design Intelligence"):
     st.session_state.menu = "Design Intelligence"
-if st.sidebar.button("📈 Market Intelligence"): 
+if st.sidebar.button("📈 Market Intelligence"):
     st.session_state.menu = "Market Intelligence"
 
 # 5. VISTA "MY WATCHES"
@@ -107,11 +102,11 @@ if st.session_state.menu == "My Watches":
     cols = st.columns(3)
     for i, w in enumerate(watches):
         with cols[i % 3]:
-            # HTML per la card dell'orologio con estrazione dati puntuale
-            card_html = f"""
+            # Costruiamo la stringa HTML in una variabile
+            card_content = f"""
             <div class="watch-card">
                 <div class="card-image-placeholder">⌚</div>
-                <div style="font-size: 17px; font-weight: 700; color: #111827;">{w['Model']}</div>
+                <div style="font-size: 17px; font-weight: 700; color: #111827; margin-bottom: 2px;">{w['Model']}</div>
                 <div style="color: #6B7280; font-size: 12px; margin-bottom: 10px;">Ref: {w['Ref']}</div>
                 
                 <div class="watch-details">
@@ -126,5 +121,6 @@ if st.session_state.menu == "My Watches":
                 </div>
             </div>
             """
-            st.markdown(card_html, unsafe_allow_html=True)
+            # Punto cruciale: Usiamo st.markdown CON unsafe_allow_html=True
+            st.markdown(card_content, unsafe_allow_html=True)
             st.button("Set as Target", key=f"target_{i}")
