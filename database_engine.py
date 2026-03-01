@@ -7,42 +7,36 @@ import random
 USER_BRAND_NAME = "MY BRAND"
 
 class WatchDatabase:
-    def __init__(self, file_path='watches_final.csv'):
+    def __init__(self, file_path='watches_final_v2.csv'):
         self.file_path = file_path
-        # Schede tecniche base per garantire dati reali
-        self.TECH_POOL = [
-            {"mov_brand": "Mido", "mov_reserve": 72, "mov_freq": 25200, "mov_ref": "Mido 72", "case_thickness": 11.5},
-            {"mov_brand": "Patek", "mov_reserve": 48, "mov_freq": 21600, "mov_ref": "240 Q", "case_thickness": 8.8},
-            {"mov_brand": "Seiko", "mov_reserve": 41, "mov_freq": 21600, "mov_ref": "NH34", "case_thickness": 13.2},
-            {"mov_brand": "ETA", "mov_reserve": 80, "mov_freq": 28800, "mov_ref": "Powermatic", "case_thickness": 10.5}
-        ]
         self.df = self.get_or_create_dataset()
 
-    @st.cache_data(show_spinner="Sincronizzazione Mercato...")
+    @st.cache_data(show_spinner="Generazione dati di mercato...")
     def get_or_create_dataset(_self):
         if os.path.exists(_self.file_path):
             return pd.read_csv(_self.file_path)
         
-        brands = [USER_BRAND_NAME, "Patek Philippe", "Rolex", "Mido", "Cartier", "Omega", "Zenith"]
-        brands += [f"Indie Brand {i}" for i in range(1, 50)]
+        brands = [USER_BRAND_NAME, "Patek Philippe", "Rolex", "Mido", "Omega", "Cartier"]
+        brands += [f"Indie Brand {i}" for i in range(1, 60)]
         
         data = []
         for b in brands:
-            # Generiamo modelli con prezzi e caratteristiche varie
             for i in range(1, 15):
-                tech = random.choice(_self.TECH_POOL)
+                # Generiamo valori casuali ma coerenti
+                reserve = random.choice([42, 48, 70, 72, 80])
+                freq = random.choice([21600, 25200, 28800])
+                thickness = round(random.uniform(8.5, 14.5), 1)
+                
                 row = {
                     "brand": b,
                     "model_name": f"Vision {i}",
                     "reference": f"REF-{random.randint(1000, 9999)}",
                     "material": random.choice(["Steel", "Gold", "Titanium"]),
-                    "diameter": random.choice([38, 39, 40, 41, 42]),
-                    "price_estimate": random.randint(2000, 60000),
-                    # Campi fondamentali per l'asse Y del grafico
-                    "mov_reserve": tech["mov_reserve"],
-                    "case_thickness": tech["case_thickness"],
-                    "mov_freq": tech["mov_freq"],
-                    "power_score": round((tech["mov_reserve"] * tech["mov_freq"]) / 10000, 2)
+                    "price_estimate": random.randint(2000, 65000),
+                    "mov_reserve": reserve,
+                    "case_thickness": thickness,
+                    "mov_freq": freq,
+                    "power_score": round((reserve * freq) / 10000, 2)
                 }
                 data.append(row)
         
