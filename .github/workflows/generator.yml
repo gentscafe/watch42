@@ -1,0 +1,28 @@
+name: Generate Watch Database
+on: [workflow_dispatch] # Ti permette di avviarlo con un click
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v3
+
+      - name: Setup Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.9'
+
+      - name: Install dependencies
+        run: pip install pandas
+
+      - name: Run generator
+        run: python generate_data.py
+
+      - name: Commit and Push CSV
+        run: |
+          git config --global user.name "VibeBot"
+          git config --global user.email "bot@github.com"
+          git add watches_database.csv
+          git commit -m "Automated: Database CSV generated"
+          git push
