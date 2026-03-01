@@ -7,11 +7,11 @@ import random
 USER_BRAND_NAME = "MY BRAND"
 
 class WatchDatabase:
-    def __init__(self, file_path='watches_final_v2.csv'):
+    def __init__(self, file_path='watches_v9_final.csv'):
         self.file_path = file_path
         self.df = self.get_or_create_dataset()
 
-    @st.cache_data(show_spinner="Generazione dati di mercato...")
+    @st.cache_data(show_spinner="Sincronizzazione Mercato...")
     def get_or_create_dataset(_self):
         if os.path.exists(_self.file_path):
             return pd.read_csv(_self.file_path)
@@ -22,7 +22,6 @@ class WatchDatabase:
         data = []
         for b in brands:
             for i in range(1, 15):
-                # Generiamo valori casuali ma coerenti
                 reserve = random.choice([42, 48, 70, 72, 80])
                 freq = random.choice([21600, 25200, 28800])
                 thickness = round(random.uniform(8.5, 14.5), 1)
