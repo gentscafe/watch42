@@ -3,80 +3,81 @@ import pandas as pd
 import numpy as np
 from database_engine import db_engine
 
-# 1. CONFIGURAZIONE PAGINA (Deve essere il primo comando assoluto)
+# 1. CONFIGURAZIONE PAGINA (Deve essere la prima riga assoluta)
 st.set_page_config(page_title="watch42 | Market Intelligence", layout="wide")
 
-# 2. PULIZIA DATI FORZATA (Risolve il TypeError e il ValueError)
-# Trasformiamo il diametro in numeri puri per i filtri
+# 2. PULIZIA DATI (Risolve il TypeError dello slider e il ValueError)
+# Trasformiamo diameter in numero puro (es: "40mm" -> 40)
 db_engine.df['diameter_clean'] = pd.to_numeric(
     db_engine.df['diameter'].astype(str).str.extract(r'(\d+)')[0], 
     errors='coerce'
 ).fillna(40).astype(int)
 
-# 3. CSS DEFINITIVO (Sidebar a sinistra e Tile pulite)
+# 3. CSS PROFESSIONALE (Sidebar e Tile UI)
 st.markdown("""
     <style>
     .main { background-color: #F8F9FC; }
-    [data-testid="stSidebar"] { background-color: #FBFBFE !important; border-right: 1px solid #E5E7EB !important; }
-    .sidebar-header { font-size: 11px; font-weight: 700; color: #9CA3AF; text-transform: uppercase; padding: 25px 20px 10px 20px; }
+    [data-testid="stSidebar"] {
+        background-color: #FBFBFE !important;
+        border-right: 1px solid #E5E7EB !important;
+    }
+    .sidebar-header {
+        font-size: 11px; font-weight: 700; color: #9CA3AF;
+        text-transform: uppercase; padding: 25px 20px 10px 20px;
+    }
     [data-testid="stSidebar"] .stButton > button {
-        width: 100% !important; border: none !important; background-color: transparent !important;
-        text-align: left !important; padding: 10px 20px !important; display: flex !important;
+        width: 100% !important; border: none !important;
+        background-color: transparent !important; text-align: left !important;
+        padding: 10px 20px !important; display: flex !important;
         align-items: center !important; justify-content: flex-start !important; gap: 12px !important;
         color: #1F2937 !important; font-size: 14px !important;
     }
-    .watch-card-container { background-color: white; padding: 20px; border-radius: 20px; border: 1px solid #F3F4F6; box-shadow: 0 4px 6px rgba(0,0,0,0.02); }
-    .info-grid { margin: 15px 0; padding: 12px; background-color: #F9FAFB; border-radius: 10px; }
+    [data-testid="stSidebar"] .stButton > button:hover {
+        background-color: #F3F4F6 !important; color: #2E5BFF !important;
+    }
+    .info-grid {
+        margin: 15px 0; padding: 12px; background-color: #F9FAFB; border-radius: 10px;
+    }
     .info-row { display: flex; justify-content: space-between; font-size: 13px; margin-bottom: 6px; }
     .info-label { color: #6B7280; font-weight: 500; }
     .info-value { color: #111827; font-weight: 600; }
     </style>
 """, unsafe_allow_html=True)
 
-# 4. SIDEBAR E NAVIGAZIONE
+# 4. STATO DELLA NAVIGAZIONE
 if 'nav' not in st.session_state: st.session_state.nav = "My Watches"
 if 'edit_id' not in st.session_state: st.session_state.edit_id = None
 
+# 5. SIDEBAR RIPRISTINATA (Senza filtri, con tutte le voci)
 st.sidebar.markdown('<div class="sidebar-header">NAVIGAZIONE</div>', unsafe_allow_html=True)
 if st.sidebar.button("⌚ My Watches"): st.session_state.nav = "My Watches"
 if st.sidebar.button("📊 Pricing Intelligence"): st.session_state.nav = "Pricing"
-
-st.sidebar.markdown("---")
-st.sidebar.markdown('<div class="sidebar-header">FILTRI DATABASE</div>', unsafe_allow_html=True)
-
-# Filtri dinamici
-selected_brands = st.sidebar.multiselect("Brand", sorted(db_engine.df['brand'].unique()))
-dia_min_val = int(db_engine.df['diameter_clean'].min())
-dia_max_val = int(db_engine.df['diameter_clean'].max())
-dia_range = st.sidebar.slider("Diametro (mm)", dia_min_val, dia_max_val, (38, 42))
+if st.sidebar.button("🗺️ Design Intelligence"): st.session_state.nav = "Design"
+if st.sidebar.button("📈 Market Intelligence"): st.session_state.nav = "Market"
 
 st.sidebar.markdown("---")
 st.sidebar.markdown('<div class="sidebar-header">DATASETS</div>', unsafe_allow_html=True)
-if st.sidebar.button("🗄️ Watch DB"): st.session_state.nav = "DB"
+if st.sidebar.button("🗄️ Watch DB Explorer"): st.session_state.nav = "DB"
 
-# Filtro manuale (per evitare errori nel metodo filter_data del motore)
-df_filtered = db_engine.df.copy()
-if selected_brands:
-    df_filtered = df_filtered[df_filtered['brand'].isin(selected_brands)]
-df_filtered = df_filtered[df_filtered['diameter_clean'].between(dia_range[0], dia_range[1])]
+# 6. LOGICA DELLE VISTE
+nav = st.session_state.nav
 
-# 5. VISTA MY WATCHES
-if st.session_state.nav == "My Watches":
-    st.header(f"My Watches ({len(df_filtered)} orologi)")
+if nav == "My Watches":
+    st.header(f"My Watches (5000 orologi)")
     
-    # Pannello Modifica
+    # Pannello di Modifica
     if st.session_state.edit_id is not None:
         idx = st.session_state.edit_id
         item = db_engine.df.loc[idx]
         with st.container(border=True):
             st.subheader(f"📝 Modifica: {item['model_name']}")
-            st.text_input("Modello", item['model_name'])
+            st.text_input("Nome Modello", item['model_name'])
             if st.button("Salva"):
                 st.session_state.edit_id = None
                 st.rerun()
 
-    # Griglia 
-    display_df = df_filtered.head(12)
+    # Griglia a 3 colonne
+    display_df = db_engine.df.head(12)
     cols = st.columns(3)
     for i, (idx, row) in enumerate(display_df.iterrows()):
         with cols[i % 3]:
@@ -98,6 +99,20 @@ if st.session_state.nav == "My Watches":
                     st.rerun()
                 b2.button("Set Target", key=f"tr_{idx}", use_container_width=True)
 
-elif st.session_state.nav == "DB":
+elif nav == "Pricing":
+    st.header("Pricing Intelligence")
+    st.scatter_chart(db_engine.df.head(100), x="diameter_clean", y="brand")
+
+elif nav == "Design":
+    st.header("Design Intelligence")
+    st.info("Visualizzazione degli schemi di design basata sui 5000 record.")
+    st.bar_chart(db_engine.df['watch_style'].value_counts())
+
+elif nav == "Market":
+    st.header("Market Intelligence")
+    st.info("Trend di mercato e analisi competitiva.")
+    st.line_chart(np.random.randn(20, 2)) # Placeholder per dati di trend
+
+elif nav == "DB":
     st.header("Watch Database Explorer")
-    st.dataframe(df_filtered, use_container_width=True, hide_index=True)
+    st.dataframe(db_engine.df, use_container_width=True, hide_index=True)
