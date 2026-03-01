@@ -1,12 +1,15 @@
 import streamlit as st
 import pandas as pd
-import plotly.express as px
 import numpy as np
+from database_engine import get_watch_dataset #
 
-# 1. CONFIGURAZIONE PAGINA
+# 1. CONFIGURAZIONE PAGINA E CARICAMENTO DATI
 st.set_page_config(page_title="watch42 | Market Intelligence", layout="wide")
 
-# 2. CSS DEFINITIVO (Fix Sidebar e Card)
+# Caricamento del dataset globale dal nuovo motore
+df_global = get_watch_dataset() 
+
+# 2. INJECT CSS (Manteniamo la UI professionale)
 st.markdown("""
     <style>
     .main { background-color: #F8F9FC; }
@@ -37,6 +40,7 @@ st.markdown("""
     .detail-label { color: #6B7280; font-weight: 500; }
     .detail-value { color: #111827; font-weight: 600; }
     
+    /* Allineamento pulsanti sidebar */
     [data-testid="stSidebar"] .stButton > button {
         width: 100% !important; border: none !important;
         background-color: transparent !important; text-align: left !important;
@@ -46,91 +50,66 @@ st.markdown("""
     </style>
 """, unsafe_allow_html=True)
 
-# 3. GESTIONE DATI IN SESSION STATE
-if 'watch_data' not in st.session_state:
-    st.session_state.watch_data = [
-        {"Model": "All Dial Model 1", "Ref": "M001.431.11.001.02", "Price": "1.200", "Mat": "Steel", "Dia": "42mm", "Mov": "Manual"},
-        {"Model": "All Dial Model 2", "Ref": "M001.431.11.011.02", "Price": "1.350", "Mat": "Titanium", "Dia": "38mm", "Mov": "Manual"},
-        {"Model": "All Dial Model 3", "Ref": "M001.431.11.021.02", "Price": "1.500", "Mat": "Titanium", "Dia": "38mm", "Mov": "Manual"},
-        {"Model": "All Dial Model 4", "Ref": "M001.431.11.031.02", "Price": "1.650", "Mat": "Steel", "Dia": "40mm", "Mov": "Manual"},
-        {"Model": "All Dial Model 5", "Ref": "M001.431.11.041.02", "Price": "1.800", "Mat": "Gold", "Dia": "42mm", "Mov": "Automatic"},
-        {"Model": "All Dial Model 6", "Ref": "M001.431.11.051.02", "Price": "1.950", "Mat": "Steel", "Dia": "38mm", "Mov": "Automatic"}
-    ]
+# 3. CONFIGURAZIONE NAVIGAZIONE (SIDEBAR)
+with st.sidebar:
+    st.markdown('<div class="sidebar-header">NAVIGAZIONE</div>', unsafe_allow_html=True)
+    page = st.radio("Seleziona vista:", ["Watch42 Home (UI)", "Watch DB"], label_visibility="collapsed") #
 
-if 'editing_index' not in st.session_state:
-    st.session_state.editing_index = None
+# 4. LOGICA DI VISUALIZZAZIONE (ROUTING)
 
-# 4. SIDEBAR
-st.sidebar.markdown('<div class="sidebar-header">MENU</div>', unsafe_allow_html=True)
-if 'menu' not in st.session_state: st.session_state.menu = "My Watches"
-
-if st.sidebar.button("⌚ My Watches"): st.session_state.menu = "My Watches"
-if st.sidebar.button("📊 Pricing Intelligence"): st.session_state.menu = "Pricing Intelligence"
-if st.sidebar.button("🗺️ Design Intelligence"): st.session_state.menu = "Design Intelligence"
-if st.sidebar.button("📈 Market Intelligence"): st.session_state.menu = "Market Intelligence"
-
-menu = st.session_state.menu
-
-# 5. LOGICA DELLE VISTE
-if menu == "My Watches":
-    st.header("My Watches")
+if page == "Watch42 Home (UI)": #
+    st.title("Watch42 Discovery") #
     
-    # SEZIONE DI MODIFICA (Sostituisce il Pop-up se un indice è selezionato)
-    if st.session_state.editing_index is not None:
-        idx = st.session_state.editing_index
-        watch = st.session_state.watch_data[idx]
+    # Sottosezioni della UI Designer
+    menu = st.sidebar.selectbox("Intelligence Mode", ["My Watches", "Pricing", "Design", "Market"])
+    
+    if menu == "My Watches":
+        # Usiamo i primi 6 record del nuovo DB per popolare le card grafiche
+        display_df = df_global.head(6) 
+        cols = st.columns(3)
         
-        with st.expander(f"📝 Editing: {watch['Model']}", expanded=True):
-            col1, col2 = st.columns(2)
-            with col1:
-                new_model = st.text_input("Model Name", watch["Model"])
-                new_ref = st.text_input("Reference", watch["Ref"])
-                new_price = st.text_input("Price (€)", watch["Price"])
-            with col2:
-                new_mat = st.selectbox("Material", ["Steel", "Titanium", "Gold", "Bronze"], index=0)
-                new_dia = st.text_input("Diameter", watch["Dia"])
-                new_mov = st.selectbox("Movement", ["Manual", "Automatic", "Quartz"], index=0)
-            
-            c1, c2 = st.columns(2)
-            if c1.button("Save Changes", type="primary"):
-                st.session_state.watch_data[idx] = {
-                    "Model": new_model, "Ref": new_ref, "Price": new_price,
-                    "Mat": new_mat, "Dia": new_dia, "Mov": new_mov
-                }
-                st.session_state.editing_index = None
-                st.rerun()
-            if c2.button("Cancel"):
-                st.session_state.editing_index = None
-                st.rerun()
-        st.markdown("---")
-
-    # GRIGLIA OROLOGI
-    cols = st.columns(3)
-    for i, w in enumerate(st.session_state.watch_data):
-        with cols[i % 3]:
-            card_html = f"""
-            <div class="watch-card">
-                <div class="card-image-placeholder">⌚</div>
-                <div style="font-size: 17px; font-weight: 700; color: #111827;">{w['Model']}</div>
-                <div style="color: #6B7280; font-size: 12px; margin-bottom: 10px;">Ref: {w['Ref']}</div>
-                <div class="watch-details">
-                    <div class="detail-row"><span class="detail-label">Material</span><span class="detail-value">{w['Mat']}</span></div>
-                    <div class="detail-row"><span class="detail-label">Diameter</span><span class="detail-value">{w['Dia']}</span></div>
-                    <div class="detail-row"><span class="detail-label">Movement</span><span class="detail-value">{w['Mov']}</span></div>
+        for i, (idx, row) in enumerate(display_df.iterrows()):
+            with cols[i % 3]:
+                card_html = f"""
+                <div class="watch-card">
+                    <div class="card-image-placeholder">⌚</div>
+                    <div style="font-size: 17px; font-weight: 700; color: #111827;">{row.get('Model', 'N/A')}</div>
+                    <div style="color: #6B7280; font-size: 12px; margin-bottom: 10px;">Ref: {row.get('Reference', 'N/A')}</div>
+                    <div class="watch-details">
+                        <div class="detail-row"><span class="detail-label">Brand</span><span class="detail-value">{row.get('Brand', 'N/A')}</span></div>
+                        <div class="detail-row"><span class="detail-label">Material</span><span class="detail-value">{row.get('Material', 'N/A')}</span></div>
+                        <div class="detail-row"><span class="detail-label">Diameter</span><span class="detail-value">{row.get('Diameter', 'N/A')}</span></div>
+                    </div>
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 10px;">
+                        <div style="font-size: 20px; font-weight: 700; color: #2E5BFF;">€ {row.get('Price', '0')}</div>
+                        <div style="font-size: 12px; color: #059669; font-weight: 600;">● Up to date</div>
+                    </div>
                 </div>
-                <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 10px;">
-                    <div style="font-size: 20px; font-weight: 700; color: #2E5BFF;">€ {w['Price']}</div>
-                    <div style="font-size: 12px; color: #059669; font-weight: 600;">● Up to date</div>
-                </div>
-            </div>
-            """
-            st.markdown(card_html, unsafe_allow_html=True)
-            
-            btn_col1, btn_col2 = st.columns(2)
-            if btn_col1.button(f"Edit Details", key=f"edit_btn_{i}"):
-                st.session_state.editing_index = i
-                st.rerun()
-            btn_col2.button("Set as Target", key=f"target_btn_{i}")
+                """
+                st.markdown(card_html, unsafe_allow_html=True)
+                st.button("Set as Target", key=f"target_{idx}", use_container_width=True)
 
-else:
-    st.info(f"Sezione {menu} in fase di sviluppo.")
+    # (Qui andrebbero le logiche Pricing, Design e Market Intelligence simili a prima)
+
+elif page == "Watch DB": #
+    # AREA DATABASE: Schermata tecnica dedicata
+    st.title("⌚ Watch Database Explorer") #
+    st.write(f"Record totali: {len(df_global)}") #
+    
+    # Barra di ricerca rapida per il database tecnico
+    search_query = st.text_input("Filtra database (Brand o Modello):", "")
+    
+    if search_query:
+        filtered_df = df_global[df_global.astype(str).apply(lambda x: x.str.contains(search_query, case=False)).any(axis=1)]
+    else:
+        filtered_df = df_global
+
+    # Tabella interattiva nativa per gestire grandi volumi
+    st.dataframe(
+        filtered_df, 
+        use_container_width=True, 
+        hide_index=True,
+        column_config={
+            "Price": st.column_config.NumberColumn(format="€ %d")
+        }
+    ) #
