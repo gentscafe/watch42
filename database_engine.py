@@ -5,13 +5,12 @@ import os
 import random
 
 # --- CONFIGURAZIONE IDENTITÀ ---
-# Definiamo il brand che rappresenta l'utente del servizio
-USER_BRAND_NAME = "Watch42 Lab"
+# Il nome esatto che apparirà in "My Watches"
+USER_BRAND_NAME = "MY BRAND"
 
 class WatchDatabase:
-    def __init__(self, file_path='watches_database.csv'):
+    def __init__(self, file_path='watches_v3.csv'):
         self.file_path = file_path
-        # Schede tecniche reali per i movimenti (Mappatura 1:1)
         self.MOVEMENT_TECH_SHEETS = {
             "Mido 72": {
                 "mov_brand": "Mido", "mov_ref": "Mido 72", "mov_base": "ETA A31.111",
@@ -30,76 +29,51 @@ class WatchDatabase:
                 "mov_type": "Automatic", "mov_display": "Analog", "mov_diam": 27.40,
                 "mov_jewels": 24, "mov_reserve": 41, "mov_freq": 21600,
                 "mov_hands": "Hours, Minutes, Seconds, GMT", "mov_astro": "None"
-            },
-            "Miyota 9015": {
-                "mov_brand": "Citizen/Miyota", "mov_ref": "9015", "mov_base": "None",
-                "mov_type": "Automatic", "mov_display": "Analog", "mov_diam": 26.00,
-                "mov_jewels": 24, "mov_reserve": 42, "mov_freq": 28800,
-                "mov_hands": "Hours, Minutes, Seconds", "mov_astro": "Date"
-            },
-            "NOMOS DUW 3001": {
-                "mov_brand": "NOMOS", "mov_ref": "DUW 3001", "mov_base": "In-House",
-                "mov_type": "Automatic", "mov_display": "Analog", "mov_diam": 28.80,
-                "mov_jewels": 27, "mov_reserve": 43, "mov_freq": 21600,
-                "mov_hands": "Hours, Minutes, Seconds", "mov_astro": "None"
             }
         }
         self.df = self.get_or_create_dataset()
 
-    @st.cache_data(show_spinner="Generazione Database Tecnico Watch42...")
+    def calculate_power_score(self, reserve, frequency):
+        return round((reserve * frequency) / 10000, 2)
+
+    @st.cache_data(show_spinner="Generazione Ecosistema MY BRAND...")
     def get_or_create_dataset(_self):
         if os.path.exists(_self.file_path):
             return pd.read_csv(_self.file_path)
         
-        # Aggiungiamo il brand dell'utente alla lista dei brand
-        brands = [USER_BRAND_NAME, "Mido", "Patek Philippe", "Nomos Glashütte", "F.P. Journe", "H. Moser & Cie"]
-        brands += [f"Independent Lab {i}" for i in range(1, 91)]
+        # Inseriamo 'MY BRAND' nella lista
+        brands = [USER_BRAND_NAME, "Patek Philippe", "Rolex", "Mido", "Nomos Glashütte"]
+        brands += [f"Independent Lab {i}" for i in range(1, 95)]
         
-        styles = ["Dress", "Diver", "Chronograph", "GMT", "Pilot/Field"]
-        materials = ["Steel", "Titanium", "Gold", "Platinum"]
-        versions = ["Series 1", "Mark II", "Limited Edition", "Prototype"]
-
         data = []
         mov_names = list(_self.MOVEMENT_TECH_SHEETS.keys())
 
         for brand in brands:
-            # Generiamo 50 modelli per ogni brand (incluso quello dell'utente)
             for i in range(1, 51):
                 mov_name = random.choice(mov_names)
-                tech_sheet = _self.MOVEMENT_TECH_SHEETS[mov_name]
-                watch_style = random.choice(styles)
+                tech = _self.MOVEMENT_TECH_SHEETS[mov_name]
+                thickness = round(random.uniform(7.0, 15.0), 1)
+                p_score = self.calculate_power_score(tech['mov_reserve'], tech['mov_freq'])
                 
                 record = {
                     "brand": brand,
-                    "model_name": f"{random.choice(['Legacy', 'Heritage', 'Vision'])} {i}",
-                    "model_version": random.choice(versions),
+                    "model_name": f"Model {i}",
                     "reference": f"REF-{brand[:3].upper()}-{random.randint(1000, 9999)}",
-                    "watch_style": watch_style,
-                    "material": random.choice(materials),
-                    "diameter": random.choice([38, 39, 40, 41, 42]),
-                    "price_estimate": random.randint(1500, 120000),
-                    "img_url": "https://images.unsplash.com/photo-1523170335258-f5ed11844a49?q=80&w=300&h=300&auto=format&fit=crop"
+                    "material": random.choice(["Steel", "Gold", "Titanium"]),
+                    "diameter": random.choice([38, 40, 42]),
+                    "case_thickness": thickness,
+                    "power_score": p_score,
+                    "price_estimate": random.randint(2000, 80000),
+                    "img_url": "https://images.unsplash.com/photo-1523170335258-f5ed11844a49?q=80&w=300"
                 }
-                
-                record.update(tech_sheet)
+                record.update(tech)
                 data.append(record)
         
         df = pd.DataFrame(data)
         df.to_csv(_self.file_path, index=False)
         return df
 
-    def filter_data(self, filters=None):
-        filtered_df = self.df.copy()
-        if not filters: return filtered_df
-        for col, val in filters.items():
-            if val and col in filtered_df.columns:
-                if isinstance(val, list): filtered_df = filtered_df[filtered_df[col].isin(val)]
-                elif isinstance(val, tuple): filtered_df = filtered_df[filtered_df[col].between(val[0], val[1])]
-                elif isinstance(val, str): filtered_df = filtered_df[filtered_df[col].str.contains(val, case=False)]
-        return filtered_df
-
     def get_my_watches(self):
-        """Restituisce esclusivamente gli orologi appartenenti al brand dell'utente"""
         return self.df[self.df['brand'] == USER_BRAND_NAME]
 
 db_engine = WatchDatabase()
