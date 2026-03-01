@@ -7,46 +7,43 @@ import random
 USER_BRAND_NAME = "MY BRAND"
 
 class WatchDatabase:
-    def __init__(self, file_path='watches_v10_final.csv'): # v10 per reset totale
+    def __init__(self, file_path='watches_ULTIMATE.csv'):
         self.file_path = file_path
         self.df = self.get_or_create_dataset()
 
-    @st.cache_data(show_spinner="Sincronizzazione Dati Mercato...")
+    @st.cache_data(show_spinner="Reset e Sincronizzazione Dati...")
     def get_or_create_dataset(_self):
+        # Se il file esiste, lo carichiamo e forziamo i tipi numerici
         if os.path.exists(_self.file_path):
             df = pd.read_csv(_self.file_path)
-            # Forza la conversione numerica per sicurezza
-            cols_to_fix = ['price_estimate', 'mov_reserve', 'case_thickness', 'power_score']
-            for col in cols_to_fix:
-                if col in df.columns:
-                    df[col] = pd.to_numeric(df[col], errors='coerce').fillna(0)
-            return df
+        else:
+            # Generazione forzata di 1000 record con colonne garantite
+            brands = [USER_BRAND_NAME, "Patek Philippe", "Rolex", "Mido", "Omega"]
+            brands += [f"Competitor {i}" for i in range(1, 50)]
+            
+            data = []
+            for b in brands:
+                for i in range(1, 15):
+                    res = float(random.choice([42, 48, 70, 72]))
+                    thk = float(round(random.uniform(8.0, 15.0), 1))
+                    price = float(random.randint(2000, 50000))
+                    
+                    data.append({
+                        "brand": b,
+                        "model_name": f"Model {i}",
+                        "reference": f"REF-{b[:3].upper()}-{random.randint(100, 999)}",
+                        "material": random.choice(["Steel", "Gold", "Titanium"]),
+                        "price_estimate": price,
+                        "mov_reserve": res,
+                        "case_thickness": thk,
+                        "power_score": float(round((res * 28800) / 10000, 2))
+                    })
+            df = pd.DataFrame(data)
+            df.to_csv(_self.file_path, index=False)
         
-        brands = [USER_BRAND_NAME, "Patek Philippe", "Rolex", "Mido", "Omega", "Cartier", "Zenith"]
-        brands += [f"Indie Brand {i}" for i in range(1, 60)]
-        
-        data = []
-        for b in brands:
-            for i in range(1, 15):
-                reserve = random.choice([42, 48, 70, 72, 80])
-                freq = random.choice([21600, 25200, 28800])
-                thickness = round(random.uniform(8.5, 14.5), 1)
-                
-                row = {
-                    "brand": b,
-                    "model_name": f"Vision {i}",
-                    "reference": f"REF-{random.randint(1000, 9999)}",
-                    "material": random.choice(["Steel", "Gold", "Titanium"]),
-                    "price_estimate": float(random.randint(2000, 65000)),
-                    "mov_reserve": float(reserve),
-                    "case_thickness": float(thickness),
-                    "mov_freq": float(freq),
-                    "power_score": float(round((reserve * freq) / 10000, 2))
-                }
-                data.append(row)
-        
-        df = pd.DataFrame(data)
-        df.to_csv(_self.file_path, index=False)
+        # OPERAZIONE CRUCIALE: Forza la conversione numerica prima di restituire il DF
+        for col in ['price_estimate', 'mov_reserve', 'case_thickness', 'power_score']:
+            df[col] = pd.to_numeric(df[col], errors='coerce').fillna(0.0)
         return df
 
     def update_watch_data(self, reference, updated_data):
