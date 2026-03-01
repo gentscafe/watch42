@@ -1,5 +1,5 @@
 import streamlit as st
-import pd
+import pandas as pd
 import plotly.express as px
 import numpy as np
 
@@ -51,60 +51,60 @@ def get_watchbase_mock_data():
 
 data = get_watchbase_mock_data()
 
-# 4. SIDEBAR NAVIGATION (Solo Navigazione - Filtri Rimossi)
-st.sidebar.title("watch42") [cite: 2]
-st.sidebar.caption("v1.0 MVP - WatchBase API") [cite: 5]
+# 4. SIDEBAR NAVIGATION (Filtri rimossi come richiesto)
+st.sidebar.title("watch42")
+st.sidebar.caption("v1.0 MVP - WatchBase API")
 
 menu = st.sidebar.radio(
     "MENU",
-    ["My Watches", "Pricing Intelligence", "Design Intelligence", "Market Intelligence"], [cite: 16, 18, 19, 20]
+    ["My Watches", "Pricing Intelligence", "Design Intelligence", "Market Intelligence"],
     index=0
 )
 
-# 5. VISTE CORE
+# 5. LOGICA DELLE VISTE CORE
 
 if menu == "My Watches":
-    st.header("My Watches (Landing View)") [cite: 16, 38]
-    st.write("Visualizzazione a griglia degli orologi del brand.") [cite: 16, 39]
+    st.header("My Watches (Landing View)")
+    st.write("Visualizzazione a griglia degli orologi del brand.")
     
     cols = st.columns(3)
     for i in range(6):
         with cols[i % 3]:
             st.markdown(f"""
             <div style="background: white; padding: 15px; border-radius: 12px; border: 1px solid #EEE; margin-bottom: 10px;">
-                <p style="font-weight: bold; margin-bottom: 2px;">All Dial Model {i+1}</p> [cite: 27]
-                <p style="font-size: 0.8em; color: gray;">Ref: M001.431.11.0{i}1.02</p> [cite: 40]
+                <p style="font-weight: bold; margin-bottom: 2px;">All Dial Model {i+1}</p>
+                <p style="font-size: 0.8em; color: gray;">Ref: M001.431.11.0{i}1.02</p>
                 <hr style="margin: 10px 0;">
-                <p style="color: #2E5BFF; font-weight: bold; font-size: 1.1em;">€ {1200 + (i*150)}</p> [cite: 41]
-                <p style="font-size: 0.8em;">Tech Status: <span style="color: green;">Up to date</span></p> [cite: 42]
+                <p style="color: #2E5BFF; font-weight: bold; font-size: 1.1em;">€ {1200 + (i*150)}</p>
+                <p style="font-size: 0.8em;">Tech Status: <span style="color: green;">Up to date</span></p>
             </div>
             """, unsafe_allow_html=True)
             if st.button(f"Set as Target {i+1}", key=f"target_{i}"):
-                st.success(f"Orologio {i+1} impostato come Target globale") [cite: 43]
+                st.success(f"Orologio {i+1} impostato come Target globale")
 
 elif menu == "Pricing Intelligence":
-    st.header("Pricing & Value-for-Money Matrix") [cite: 18, 45]
-    fig = px.scatter(data, x='Price', y='PowerScore', color='Brand', [cite: 46, 47, 48]
+    st.header("Pricing & Value-for-Money Matrix")
+    fig = px.scatter(data, x='Price', y='PowerScore', color='Brand',
                      labels={'Price': 'Prezzo di listino (€)', 'PowerScore': 'Power Score (h)'})
     fig.update_layout(plot_bgcolor='rgba(0,0,0,0)')
     st.plotly_chart(fig, use_container_width=True)
 
 elif menu == "Design Intelligence":
-    st.header("White Space Heatmap") [cite: 19, 51]
-    fig = px.density_heatmap(data, x='Diameter', y='Thickness', [cite: 52, 53, 54]
-                             color_continuous_scale='RdYlGn_r', [cite: 55]
+    st.header("White Space Heatmap")
+    fig = px.density_heatmap(data, x='Diameter', y='Thickness',
+                             color_continuous_scale='RdYlGn_r',
                              labels={'Diameter': 'Diametro cassa (mm)', 'Thickness': 'Spessore (mm)'})
     st.plotly_chart(fig, use_container_width=True)
-    st.caption("Verde: Opportunità | Rosso: Saturazione") [cite: 56, 57]
+    st.caption("Verde: Opportunità | Rosso: Saturazione")
 
 elif menu == "Market Intelligence":
-    st.header("Tech Evolution Tracker") [cite: 20, 58, 59]
-    st.subheader("🤖 AI Strategic Insights") [cite: 61]
-    st.warning("Il mercato si sta spostando verso lo standard 72h; il tuo modello attuale è al di sotto della media del 30%.") [cite: 62, 63]
-    st.success("Aumento dell'uso del Titanio (+12%) rilevato nella categoria Diver sotto i 3.000€.") [cite: 64, 65]
+    st.header("Tech Evolution Tracker")
+    st.subheader("🤖 AI Strategic Insights")
+    st.warning("Il mercato si sta spostando verso lo standard 72h; il tuo modello attuale è al di sotto della media del 30%.")
+    st.success("Aumento dell'uso del Titanio (+12%) rilevato nella categoria Diver sotto i 3.000€.")
     
-    chart_data = pd.DataFrame(np.random.randint(42, 72, 12), columns=['Media Riserva di Carica']) [cite: 60]
+    chart_data = pd.DataFrame(np.random.randint(42, 72, 12), columns=['Media Riserva di Carica'])
     st.line_chart(chart_data)
 
 st.sidebar.markdown("---")
-st.sidebar.caption("Data Source: WatchBase Professional API") [cite: 5]
+st.sidebar.caption("Data Source: WatchBase Professional API")
