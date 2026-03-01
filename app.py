@@ -2,11 +2,20 @@ import streamlit as st
 import pandas as pd
 from database_engine import db_engine
 
-# QUESTA DEVE ESSERE LA PRIMA RIGA DI CODICE STREAMLIT
+# 1. QUESTA DEVE ESSERE L'UNICA E PRIMA RIGA DI CODICE STREAMLIT
 st.set_page_config(page_title="watch42 | Market Intelligence", layout="wide")
 
-# Solo DOPO puoi inserire il CSS o altri st.markdown
-st.markdown("<style>...</style>", unsafe_allow_html=True)
+# 2. SOLO ORA PUOI INSERIRE IL CSS (Unifica tutto in un unico blocco)
+st.markdown("""
+    <style>
+    .main { background-color: #F8F9FC; }
+    [data-testid="stSidebar"] {
+        background-color: #FBFBFE !important;
+        border-right: 1px solid #E5E7EB !important;
+    }
+    /* ... resto del tuo CSS professionale ... */
+    </style>
+""", unsafe_allow_html=True)
 
 # 1. CONFIGURAZIONE PAGINA (Deve essere il primo comando Streamlit)
 st.set_page_config(page_title="watch42 | Market Intelligence", layout="wide")
