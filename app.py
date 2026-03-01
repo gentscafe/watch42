@@ -6,39 +6,70 @@ import numpy as np
 # 1. CONFIGURAZIONE PAGINA
 st.set_page_config(page_title="watch42 | Market Intelligence", layout="wide")
 
-# 2. INJECT CUSTOM CSS
-# CSS personalizzato per rimuovere i radio button e creare menu con icone moderne
+# 2. INJECT ADVANCED CUSTOM CSS (Il "Vibe" Professionale)
 def inject_custom_css():
     st.markdown("""
         <style>
+        /* Sfondo generale Off-White */
         .main { background-color: #F8F9FC; }
+        
+        /* Sidebar pulita e minimale */
         [data-testid="stSidebar"] {
-            background-color: #FFFFFF;
-            border-right: 1px solid #E5E7EB;
+            background-color: #FFFFFF !important;
+            border-right: 1px solid #E5E7EB !important;
         }
-        /* Stile per i pulsanti del menu nella sidebar */
-        .stButton > button {
-            width: 100%;
-            border: none;
-            background-color: transparent;
-            text-align: left;
-            padding: 10px 15px;
-            border-radius: 8px;
+        
+        /* Titolo Sidebar */
+        .sidebar-title {
+            font-size: 24px;
+            font-weight: 700;
             color: #1F2937;
-            transition: all 0.3s;
+            margin-bottom: 20px;
+            padding: 0 10px;
         }
+
+        /* Pulsanti Menu: Allineati a sinistra, senza bordi, effetto Hover */
+        .stButton > button {
+            width: 100% !important;
+            border: none !important;
+            background-color: transparent !important;
+            text-align: left !important;
+            padding: 12px 15px !important;
+            border-radius: 10px !important;
+            color: #4B5563 !important;
+            font-size: 16px !important;
+            display: flex !important;
+            align-items: center !important;
+            gap: 10px !important;
+        }
+        
         .stButton > button:hover {
-            background-color: #F3F4F6;
-            color: #2E5BFF;
+            background-color: #F3F4F6 !important;
+            color: #2E5BFF !important;
         }
-        /* Stile card */
-        div[data-testid="metric-container"], .stPlotlyChart {
+
+        /* CARD STYLE: Ombre morbide e bordi arrotondati */
+        .watch-card {
             background-color: #FFFFFF;
-            padding: 20px;
-            border-radius: 15px;
-            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+            padding: 24px;
+            border-radius: 20px;
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.05), 0 4px 6px -2px rgba(0, 0, 0, 0.02);
             border: 1px solid #F3F4F6;
+            margin-bottom: 20px;
+            transition: transform 0.2s;
         }
+        .watch-card:hover {
+            transform: translateY(-5px);
+        }
+
+        /* Typography per le Card */
+        .card-title { font-size: 18px; font-weight: 600; color: #111827; margin-bottom: 4px; }
+        .card-ref { font-size: 13px; color: #6B7280; margin-bottom: 15px; }
+        .card-price { font-size: 22px; font-weight: 700; color: #2E5BFF; }
+        .card-status { font-size: 12px; font-weight: 500; padding: 4px 8px; border-radius: 6px; background: #ECFDF5; color: #059669; }
+
+        /* Nasconde i pallini dei radio button standard se presenti */
+        [data-testid="stMarkdownContainer"] p { margin-bottom: 0; }
         </style>
     """, unsafe_allow_html=True)
 
@@ -48,7 +79,7 @@ inject_custom_css()
 @st.cache_data
 def get_mock_data():
     brands = ["Mido", "Patek Philippe", "Audemars Piguet", "Rolex", "Cartier"]
-    df = pd.DataFrame({
+    return pd.DataFrame({
         'Model': [f'Watch {i}' for i in range(25)],
         'Price': np.random.randint(800, 50000, 25),
         'PowerScore': np.random.randint(38, 80, 25),
@@ -56,76 +87,68 @@ def get_mock_data():
         'Thickness': np.random.randint(6, 18, 25),
         'Brand': np.random.choice(brands, 25)
     })
-    return df
 
 data = get_mock_data()
 
-# 4. SIDEBAR NAVIGATION CON ICONE (Specifica 1. ARCHITETTURA)
-st.sidebar.title("watch42")
+# 4. SIDEBAR NAVIGATION (Menu con icone e allineamento corretto)
+st.sidebar.markdown('<div class="sidebar-title">watch42</div>', unsafe_allow_html=True)
 
-# Inizializzazione dello stato della navigazione
-if 'menu_option' not in st.session_state:
-    st.session_state.menu_option = "My Watches"
+if 'menu' not in st.session_state:
+    st.session_state.menu = "My Watches"
 
-# Pulsanti del menu con icone moderne
-if st.sidebar.button("⌚ My Watches"):
-    st.session_state.menu_option = "My Watches"
-if st.sidebar.button("📊 Pricing Intelligence"):
-    st.session_state.menu_option = "Pricing Intelligence"
-if st.sidebar.button("🗺️ Design Intelligence"):
-    st.session_state.menu_option = "Design Intelligence"
-if st.sidebar.button("📈 Market Intelligence"):
-    st.session_state.menu_option = "Market Intelligence"
+# Pulsanti stilizzati come voci di menu 
+if st.sidebar.button("⌚  My Watches"):
+    st.session_state.menu = "My Watches"
+if st.sidebar.button("📊  Pricing Intelligence"):
+    st.session_state.menu = "Pricing Intelligence"
+if st.sidebar.button("🗺️  Design Intelligence"):
+    st.session_state.menu = "Design Intelligence"
+if st.sidebar.button("📈  Market Intelligence"):
+    st.session_state.menu = "Market Intelligence"
 
-menu = st.session_state.menu_option
+# 5. VISTE CORE
 
-# 5. LOGICA DELLE VISTE CORE
-
-if menu == "My Watches":
-    st.header("My Watches (Landing View)")
-    st.write("Visualizzazione a griglia degli orologi del brand[cite: 16].")
+if st.session_state.menu == "My Watches":
+    st.header("My Watches")
+    st.caption("Visualizzazione a griglia degli orologi del brand[cite: 16].")
     
     cols = st.columns(3)
     for i in range(6):
         with cols[i % 3]:
+            # Card HTML personalizzata per il look premium [cite: 39, 41]
             st.markdown(f"""
-            <div style="background: white; padding: 15px; border-radius: 12px; border: 1px solid #EEE; margin-bottom: 10px;">
-                <p style="font-weight: bold; margin-bottom: 2px;">All Dial Model {i+1}</p>
-                <p style="font-size: 0.8em; color: gray;">Ref: M001.431.11.0{i}1.02</p>
-                <hr style="margin: 10px 0;">
-                <p style="color: #2E5BFF; font-weight: bold; font-size: 1.1em;">€ {1200 + (i*150)}</p>
-                <p style="font-size: 0.8em;">Status: <span style="color: green;">Up to date</span></p>
+            <div class="watch-card">
+                <div class="card-title">All Dial Model {i+1}</div>
+                <div class="card-ref">Ref: M001.431.11.0{i}1.02</div>
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 20px;">
+                    <div class="card-price">€ {1200 + (i*150)}</div>
+                    <div class="card-status">Up to date</div>
+                </div>
             </div>
             """, unsafe_allow_html=True)
-            # Bottone per impostare il target globale per comparazioni 
-            if st.button(f"Set as Target {i+1}", key=f"target_{i}"):
-                st.success(f"Orologio {i+1} impostato come Target")
+            # Bottone d'azione discreto [cite: 43]
+            if st.button(f"Set as Target", key=f"target_{i}"):
+                st.toast(f"Modello {i+1} impostato come Target!")
 
-elif menu == "Pricing Intelligence":
+elif st.session_state.menu == "Pricing Intelligence":
     st.header("Pricing Intelligence")
-    st.write("Accesso alla Pricing & Value-for-Money Matrix[cite: 18].")
     fig = px.scatter(data, x='Price', y='PowerScore', color='Brand',
-                     labels={'Price': 'Prezzo di listino (€) [cite: 47]', 'PowerScore': 'Power Score [cite: 48]'})
-    fig.update_layout(plot_bgcolor='rgba(0,0,0,0)')
+                     labels={'Price': 'Prezzo (€)', 'PowerScore': 'Power Score'})
+    fig.update_layout(plot_bgcolor='rgba(0,0,0,0)', paper_bgcolor='rgba(0,0,0,0)')
     st.plotly_chart(fig, use_container_width=True)
 
-elif menu == "Design Intelligence":
+elif st.session_state.menu == "Design Intelligence":
     st.header("Design Intelligence")
-    st.write("Accesso alla White Space Heatmap[cite: 19].")
     fig = px.density_heatmap(data, x='Diameter', y='Thickness',
                              color_continuous_scale='RdYlGn_r',
-                             labels={'Diameter': 'Diametro cassa (mm) [cite: 53]', 'Thickness': 'Spessore (mm) [cite: 54]'})
+                             labels={'Diameter': 'Diametro (mm)', 'Thickness': 'Spessore (mm)'})
     st.plotly_chart(fig, use_container_width=True)
-    st.caption("Verde: Opportunità | Rosso: Saturazione [cite: 56, 57]")
 
-elif menu == "Market Intelligence":
+elif st.session_state.menu == "Market Intelligence":
     st.header("Market Intelligence")
-    st.write("Accesso al Tech Evolution Tracker[cite: 20].")
     st.subheader("🤖 AI Strategic Insights")
     st.warning("Il mercato si sta spostando verso lo standard 72h[cite: 62].")
-    st.success("Aumento dell'uso del Titanio (+12%)[cite: 64].")
-    
-    chart_data = pd.DataFrame(np.random.randint(42, 72, 12), columns=['Media Riserva di Carica'])
-    st.line_chart(chart_data)
+    st.success("Aumento dell'uso del Titanio (+12%) rilevato[cite: 64].")
+    st.line_chart(pd.DataFrame(np.random.randint(42, 72, 12), columns=['Media Riserva di Carica']))
 
 st.sidebar.markdown("---")
