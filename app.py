@@ -53,7 +53,7 @@ if st.session_state.nav == "My Watches":
 elif st.session_state.nav == "Pricing":
     st.header("📊 Pricing Intelligence Matrix")
     
-    # Selettori in riga sopra il grafico
+    # Selettori orizzontali
     c1, c2 = st.columns(2)
     y_map = {
         "mov_reserve": "Riserva di Carica (h)", 
@@ -67,11 +67,15 @@ elif st.session_state.nav == "Pricing":
 
     # Preparazione Dati
     df_plot = db_engine.df.copy()
+    
+    # Debug rapido (Puoi rimuovere questa riga dopo il test)
+    # st.write(f"Record totali: {len(df_plot)} | Valori asse Y medi: {df_plot[y_choice].mean()}")
+
     df_plot['Status'] = 'Competitor'
     df_plot.loc[df_plot['brand'] == USER_BRAND_NAME, 'Status'] = 'Il Tuo Brand'
     df_plot.loc[df_plot['reference'] == target_ref, 'Status'] = 'TARGET'
 
-    # Creazione Grafico (Indentazione Corretta)
+    # Creazione Grafico
     fig = px.scatter(
         df_plot,
         x="price_estimate",
